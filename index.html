@@ -5,35 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flag Master Pro</title>
     <style>
-        :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; }
+        :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; --danger: #dc3545; }
         body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; overflow-x: hidden; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; height: 50px; }
         h1 { font-size: 1.1rem; margin: 0; color: #333; }
         .admin-btn { font-size: 1.4rem; background: none; border: none; padding: 5px; cursor: pointer; }
+        
+        /* Hearts/Lives Display Fix for iPad */
+        #status-bar { display: flex; justify-content: center; gap: 8px; margin-top: 15px; font-size: 1.8rem; }
+        .heart { transition: all 0.3s ease; }
+        .heart.lost { 
+            opacity: 0.15; 
+            filter: grayscale(100%); 
+            transform: scale(0.8);
+        }
+
         .view { padding: 10px 20px; display: none; margin: 0 auto; max-width: 800px; }
         .active-view { display: block; }
+        
+        /* Game Over Screen - No Buttons */
+        #game-over { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1a1a1a; color: white; z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        #game-over h1 { font-size: 4rem; margin-bottom: 10px; }
+        #game-over p { font-size: 1.2rem; opacity: 0.8; }
+        
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .play-btn { background: white; color: var(--primary); border: none; padding: 20px 50px; border-radius: 50px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        
         #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; min-height: 50px; }
         #instruction { font-size: 1.4rem; font-weight: bold; color: #2c3e50; margin: 0; }
         .speaker-btn { font-size: 1.6rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; }
-        #main-flag { width: auto; max-width: 90%; max-height: 40vh; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; object-fit: contain; }
+        
+        #main-flag { width: auto; max-width: 90%; max-height: 35vh; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; object-fit: contain; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; width: 100%; }
+        
         .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 20px 10px; font-size: 1.2rem; font-weight: 600; color: #333; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn span { color: var(--accent); font-weight: 900; font-size: 1.5rem; padding-right: 5px; margin-right: 5px; border-right: 2px solid #eee; }
+        
         .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; height: 150px; cursor: pointer; display: block; overflow: hidden; }
         .flag-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
+
         .admin-list { text-align: left; background: white; border-radius: 15px; margin: 10px auto; overflow: hidden; }
         .country-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
         .country-item input { width: 24px; height: 24px; margin-right: 15px; }
         .flag-preview { width: 45px; height: 30px; margin-right: 12px; object-fit: contain; border: 1px solid #ddd; background: #eee; }
         
-        /* Voice Selection Styling */
         .voice-section { background: white; border-radius: 15px; padding: 15px; margin: 10px 0; border: 1px solid #ddd; }
         #voice-select { width: 100%; padding: 10px; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
         
         .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; cursor: pointer; }
+        
         #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; }
         #celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: none; }
         .confetti { position: absolute; width: 10px; height: 10px; top: -10%; animation: fall linear forwards; }
@@ -47,12 +68,20 @@
         <button class="play-btn" onclick="startGame()">START</button>
     </div>
 
+    <div id="game-over">
+        <h1>💔</h1>
+        <h1 style="font-size: 2.5rem;">Game Over</h1>
+        <p>You used all 5 hearts.</p>
+        <p>Come back later to play again!</p>
+    </div>
+
     <header>
         <h1 id="view-title">Flag Fun!</h1>
         <button class="admin-btn" onclick="toggleView()">⚙️</button>
     </header>
 
     <div id="game-view" class="view active-view">
+        <div id="status-bar"></div>
         <div id="instruction-container">
             <p id="instruction">Loading...</p>
             <button id="main-speaker" class="speaker-btn" onclick="speakSpecific(currentCountry)">🔊</button>
@@ -63,9 +92,8 @@
 
     <div id="admin-view" class="view">
         <div class="voice-section">
-            <label style="font-weight: bold;">Choose Game Voice:</label>
+            <label style="font-weight: bold;">Choose Voice:</label>
             <select id="voice-select" onchange="testVoiceSelection()"></select>
-            <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Natural sounding: Samantha, Karen, or Google voices.</p>
         </div>
         <div style="padding: 10px; background: white; position: sticky; top: 50px; z-index: 99;">
             <input type="text" id="country-search" placeholder="Search..." onkeyup="filterCountries()" style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
@@ -82,33 +110,8 @@
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
         let activeNames = [], currentCountry = "", isProcessing = false, audioCtx = null, preferredVoice = null;
-
-        function populateVoiceList() {
-            const voices = window.speechSynthesis.getVoices();
-            const select = document.getElementById('voice-select');
-            const savedVoiceName = localStorage.getItem('preferredVoiceName');
-            select.innerHTML = "";
-            voices.filter(v => v.lang.startsWith("en")).forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v.name; opt.innerText = v.name;
-                if (v.name === savedVoiceName) opt.selected = true;
-                select.appendChild(opt);
-            });
-            updatePreferredVoice();
-        }
-
-        function updatePreferredVoice() {
-            const name = document.getElementById('voice-select').value;
-            preferredVoice = window.speechSynthesis.getVoices().find(v => v.name === name);
-            if (name) localStorage.setItem('preferredVoiceName', name);
-        }
-
-        function testVoiceSelection() {
-            updatePreferredVoice();
-            speakSpecific("This is my new voice.");
-        }
-
-        window.speechSynthesis.onvoiceschanged = populateVoiceList;
+        let strikes = 0;
+        let history = []; 
 
         function startGame() {
             initAudio(); populateVoiceList();
@@ -119,55 +122,66 @@
         function init() {
             const saved = localStorage.getItem('selectedFlags');
             activeNames = saved ? JSON.parse(saved) : initialList;
-            renderAdminList(); play();
+            strikes = 0;
+            history = [];
+            updateStatusBar();
+            renderAdminList();
+            play();
         }
 
-        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
-        
-        function speakSpecific(text) {
-            if (!text) return;
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            if (preferredVoice) utterance.voice = preferredVoice;
-            utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
-        }
-
-        function playSfx(win) {
-            initAudio();
-            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.frequency.setValueAtTime(win ? 587 : 150, audioCtx.currentTime);
-            if(win) osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (win ? 0.4 : 0.2));
-            osc.start(); osc.stop(audioCtx.currentTime + (win ? 0.4 : 0.2));
+        function updateStatusBar() {
+            const bar = document.getElementById('status-bar');
+            bar.innerHTML = "";
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('span');
+                // The logical check stays the same, but the CSS "lost" class now uses opacity
+                heart.className = i < (5 - strikes) ? 'heart' : 'heart lost';
+                heart.innerText = "❤️";
+                bar.appendChild(heart);
+            }
         }
 
         function play() {
-            isProcessing = false; const mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            if (strikes >= 5) {
+                document.getElementById('game-over').style.display = 'flex';
+                return;
+            }
+            isProcessing = false;
+            const mode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
             const speaker = document.getElementById('main-speaker');
             grid.innerHTML = ""; main.style.display = "none"; speaker.style.display = "none";
 
+            // --- REDUCE REPETITION ---
+            const historyLimit = Math.max(1, Math.floor(activeNames.length * 0.4));
+            const availablePool = activeNames.filter(name => !history.includes(name));
+            
+            const poolToUse = availablePool.length > 0 ? availablePool : activeNames;
+            currentCountry = poolToUse[Math.floor(Math.random() * poolToUse.length)];
+            
+            history.push(currentCountry);
+            if (history.length > historyLimit) history.shift();
+
             if (mode === 'id') {
-                currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
                 document.getElementById('instruction').innerText = "Which flag is this?";
                 main.src = `https://flagcdn.com/w640/${ALL_ISO[currentCountry]}.png`;
                 main.style.display = "block";
                 const firstLetter = currentCountry[0];
                 const choices = [currentCountry];
-                const pool = activeNames.filter(n => n[0] !== firstLetter);
-                let shuffledPool = shuffle([...pool]);
+                const wrongPool = activeNames.filter(n => n[0] !== firstLetter);
+                let shuffledWrong = shuffle([...wrongPool]);
                 let usedLetters = [firstLetter];
-                for(let c of shuffledPool) {
+                for(let c of shuffledWrong) {
                     if(choices.length >= 4) break;
                     if(!usedLetters.includes(c[0])) { choices.push(c); usedLetters.push(c[0]); }
                 }
                 shuffle(choices).forEach(n => createBtn(n, 'text', grid));
             } else {
-                let choices = shuffle([...activeNames]).slice(0, 4);
-                currentCountry = choices[Math.floor(Math.random() * 4)];
+                let choices = [currentCountry];
+                let wrongPool = activeNames.filter(n => n !== currentCountry);
+                let shuffledWrong = shuffle([...wrongPool]).slice(0, 3);
+                choices = shuffle([...choices, ...shuffledWrong]);
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
                 speaker.style.display = "flex"; speakSpecific(currentCountry);
                 choices.forEach(n => createBtn(n, 'img', grid));
@@ -182,21 +196,67 @@
             
             b.onclick = () => {
                 if (isProcessing) return;
-                
-                // --- NEW VOICE FEEDBACK FOR TEXT BUTTONS ---
                 if(type === 'text') speakSpecific(name);
-                
                 isProcessing = true;
                 const win = name === currentCountry;
                 const icon = document.getElementById('feedback-icon');
+                
                 playSfx(win);
-                if (win) { startCelebration(); icon.innerText = "🌟"; } else { icon.innerText = "❌"; }
+                if (win) { 
+                    startCelebration(); icon.innerText = "🌟"; 
+                } else { 
+                    strikes++;
+                    updateStatusBar(); // Update hearts immediately
+                    icon.innerText = "❌"; 
+                }
+                
                 icon.style.display = 'block';
-                setTimeout(() => { icon.style.display = "none"; stopCelebration(); if(win) play(); else isProcessing = false; }, win ? 1200 : 600);
+                setTimeout(() => { 
+                    icon.style.display = "none"; 
+                    stopCelebration(); 
+                    play(); 
+                }, win ? 1200 : 600);
             };
             container.appendChild(b);
         }
 
+        // --- PREVIOUSLY STABLE AUDIO/UI LOGIC ---
+        function populateVoiceList() {
+            const voices = window.speechSynthesis.getVoices();
+            const select = document.getElementById('voice-select');
+            const savedVoiceName = localStorage.getItem('preferredVoiceName');
+            select.innerHTML = "";
+            voices.filter(v => v.lang.startsWith("en")).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.name; opt.innerText = v.name;
+                if (v.name === savedVoiceName) opt.selected = true;
+                select.appendChild(opt);
+            });
+            updatePreferredVoice();
+        }
+        function updatePreferredVoice() {
+            const name = document.getElementById('voice-select').value;
+            preferredVoice = window.speechSynthesis.getVoices().find(v => v.name === name);
+            if (name) localStorage.setItem('preferredVoiceName', name);
+        }
+        function testVoiceSelection() { updatePreferredVoice(); speakSpecific("This is my new voice."); }
+        window.speechSynthesis.onvoiceschanged = populateVoiceList;
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function speakSpecific(text) {
+            if (!text) return; window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            if (preferredVoice) utterance.voice = preferredVoice;
+            utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
+        }
+        function playSfx(win) {
+            initAudio(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.frequency.setValueAtTime(win ? 587 : 150, audioCtx.currentTime);
+            if(win) osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (win ? 0.4 : 0.2));
+            osc.start(); osc.stop(audioCtx.currentTime + (win ? 0.4 : 0.2));
+        }
         function renderAdminList() {
             const list = document.getElementById('admin-list');
             if(!list) return; list.innerHTML = "";
@@ -208,18 +268,15 @@
                 list.appendChild(div);
             });
         }
-
         function toggleView() {
             document.getElementById('game-view').classList.toggle('active-view');
             document.getElementById('admin-view').classList.toggle('active-view');
             document.getElementById('view-title').innerText = document.getElementById('game-view').classList.contains('active-view') ? "Flag Fun!" : "Settings";
         }
-
         function filterCountries() {
             const q = document.getElementById('country-search').value.toLowerCase();
             document.querySelectorAll('.country-item').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none');
         }
-
         function saveSettings() {
             const selected = [];
             Object.keys(ALL_ISO).forEach(name => {
@@ -229,9 +286,8 @@
             if (selected.length < 4) { alert("Select at least 4 flags!"); return; }
             activeNames = selected;
             localStorage.setItem('selectedFlags', JSON.stringify(selected));
-            toggleView(); play();
+            toggleView(); init();
         }
-
         function startCelebration() {
             const c = document.getElementById('celebration'); c.innerHTML = ""; c.style.display = 'block';
             for (let i = 0; i < 40; i++) {
@@ -245,6 +301,7 @@
         }
         function stopCelebration() { document.getElementById('celebration').style.display = 'none'; }
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
+
     </script>
 </body>
 </html>
