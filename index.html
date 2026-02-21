@@ -14,13 +14,11 @@
         .view { padding: 20px; display: none; }
         .active-view { display: block; }
 
-        /* Search & Bulk Actions */
         #search-container { padding: 10px; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 54px; z-index: 99; }
         #country-search { width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 10px; }
         .bulk-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
         .small-btn { padding: 5px 15px; font-size: 0.8rem; border-radius: 15px; border: 1px solid #ccc; background: #fff; }
 
-        /* Game Elements */
         #instruction { font-size: 1.5rem; font-weight: bold; margin: 20px 0; min-height: 1.5em; color: #2c3e50; }
         #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
@@ -28,7 +26,6 @@
         .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; height: 100px;}
         .flag-btn img { max-width: 100%; max-height: 100%; border-radius: 4px; }
 
-        /* Admin List Fixes */
         .admin-list { text-align: left; background: white; border-radius: 15px; max-width: 500px; margin: 10px auto; overflow: hidden; }
         .country-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
         .country-item input { width: 24px; height: 24px; margin-right: 15px; flex-shrink: 0; }
@@ -37,12 +34,10 @@
         .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; }
 
-        /* Confetti Celebration */
         #celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: none; overflow: hidden; }
-        .confetti { position: absolute; width: 10px; height: 10px; background: red; top: -10%; animation: fall linear forwards; }
+        .confetti { position: absolute; width: 10px; height: 10px; top: -10%; animation: fall linear forwards; }
         @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
 
-        /* Correct/Wrong Icons */
         #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; text-shadow: 0 0 20px rgba(255,255,255,0.8); }
     </style>
 </head>
@@ -84,6 +79,7 @@
         let activeNames = [];
         let currentCountry = "";
         let isProcessing = false;
+        let audioCtx = null;
 
         function init() {
             const saved = localStorage.getItem('selectedFlags');
@@ -92,11 +88,43 @@
             play();
         }
 
+        // --- AUDIO ENGINE ---
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSuccessSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function playErrorSound() {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+        }
+
+        // --- NAVIGATION ---
         function toggleView() {
             const gView = document.getElementById('game-view');
             const aView = document.getElementById('admin-view');
             const title = document.getElementById('view-title');
-            
             if (gView.classList.contains('active-view')) {
                 gView.classList.remove('active-view');
                 aView.classList.add('active-view');
@@ -139,17 +167,13 @@
         }
 
         function saveSettings() {
+            initAudio(); // Activate audio context on user interaction
             const selected = [];
             Object.keys(ALL_ISO).forEach(name => {
                 const chk = document.getElementById(`chk-${name}`);
                 if (chk && chk.checked) selected.push(name);
             });
-
-            if (selected.length < 4) {
-                alert("Select at least 4 flags!");
-                return;
-            }
-
+            if (selected.length < 4) { alert("Select at least 4 flags!"); return; }
             activeNames = selected;
             localStorage.setItem('selectedFlags', JSON.stringify(selected));
             document.getElementById('admin-view').classList.remove('active-view');
@@ -158,6 +182,7 @@
             play();
         }
 
+        // --- GAMEPLAY ---
         function play() {
             isProcessing = false;
             const mode = Math.random() > 0.5 ? 'id' : 'fetch';
@@ -192,9 +217,11 @@
                 const icon = document.getElementById('feedback-icon');
                 
                 if (win) {
+                    playSuccessSound();
                     startCelebration();
                     icon.innerText = "🌟";
                 } else {
+                    playErrorSound();
                     icon.innerText = "❌";
                 }
                 
@@ -204,31 +231,28 @@
                     stopCelebration();
                     if(win) play(); 
                     else isProcessing = false;
-                }, win ? 1500 : 600);
+                }, win ? 1200 : 600);
             };
             container.appendChild(b);
         }
 
+        // --- VISUALS ---
         function startCelebration() {
             const container = document.getElementById('celebration');
-            container.innerHTML = "";
-            container.style.display = 'block';
-            for (let i = 0; i < 50; i++) {
+            container.innerHTML = ""; container.style.display = 'block';
+            for (let i = 0; i < 40; i++) {
                 const conf = document.createElement('div');
                 conf.className = 'confetti';
                 conf.style.left = Math.random() * 100 + 'vw';
                 conf.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-                conf.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                conf.style.animationDuration = (Math.random() * 1.5 + 0.8) + 's';
                 conf.style.width = (Math.random() * 8 + 5) + 'px';
                 conf.style.height = conf.style.width;
                 container.appendChild(conf);
             }
         }
 
-        function stopCelebration() {
-            document.getElementById('celebration').style.display = 'none';
-        }
-
+        function stopCelebration() { document.getElementById('celebration').style.display = 'none'; }
         function pickWrong(c) { return shuffle(activeNames.filter(n => n !== c)).slice(0, 3); }
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
 
