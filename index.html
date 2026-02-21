@@ -7,15 +7,16 @@
     <style>
         :root { --primary: #007bff; --bg: #f0f2f5; }
         body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; }
-        
-        /* Header & Navigation */
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         h1 { font-size: 1.2rem; margin: 0; color: #333; }
-        .admin-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 5px; }
+        .admin-btn { font-size: 1.5rem; background: none; border: none; padding: 5px; }
 
-        /* Views */
         .view { padding: 20px; display: none; }
         .active-view { display: block; }
+
+        /* Search Bar */
+        #search-container { padding: 10px; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 60px; z-index: 99; }
+        #country-search { width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; }
 
         /* Game Elements */
         #instruction { font-size: 1.5rem; font-weight: bold; margin: 20px 0; min-height: 1.5em; color: #2c3e50; }
@@ -25,13 +26,13 @@
         .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
         .flag-btn img { width: 100%; border-radius: 6px; }
 
-        /* Admin/Settings Elements */
-        .admin-list { text-align: left; background: white; border-radius: 15px; padding: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .country-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
-        .country-item input { width: 22px; height: 22px; margin-right: 15px; }
-        .save-btn { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; margin-top: 20px; width: 100%; max-width: 400px; }
+        /* Admin List */
+        .admin-list { text-align: left; background: white; border-radius: 15px; max-width: 500px; margin: 10px auto; overflow: hidden; }
+        .country-item { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
+        .country-item input { width: 24px; height: 24px; margin-right: 15px; }
+        .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; }
+        .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; }
 
-        /* Feedback Overlay */
         #feedback { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1000; }
     </style>
 </head>
@@ -49,30 +50,26 @@
     </div>
 
     <div id="admin-view" class="view">
-        <h2>Select Flags to Study</h2>
-        <div class="admin-list" id="admin-list">
-            </div>
-        <button class="save-btn" onclick="saveSettings()">Save & Play</button>
+        <div id="search-container">
+            <input type="text" id="country-search" placeholder="Search countries..." onkeyup="filterCountries()">
+        </div>
+        <div class="admin-list" id="admin-list"></div>
+        <div class="save-area">
+            <button class="save-btn" onclick="saveSettings()">Save & Play</button>
+        </div>
     </div>
 
     <div id="feedback"></div>
 
     <script>
-        const ALL_AVAILABLE = {
-            "Israel": "il", "Norway": "no", "Bangladesh": "bd", "Mexico": "mx", "Germany": "de", "Canada": "ca",
-            "Brazil": "br", "Austria": "at", "Georgia": "ge", "Greece": "gr", "Kenya": "ke", "Saudi Arabia": "sa",
-            "Spain": "es", "Egypt": "eg", "Nepal": "np", "Japan": "jp", "China": "cn", "South Korea": "kr",
-            "UK": "gb", "Portugal": "pt", "India": "in", "Argentina": "ar", "Russia": "ru", "France": "fr",
-            "Italy": "it", "Australia": "au", "USA": "us", "Switzerland": "ch", "Sweden": "se"
-        };
+        // Full ISO 3166-1 alpha-2 list
+        const ALL_ISO = {"Afghanistan":"af","Albania":"al","Algeria":"dz","American Samoa":"as","Andorra":"ad","Angola":"ao","Anguilla":"ai","Antarctica":"aq","Antigua and Barbuda":"ag","Argentina":"ar","Armenia":"am","Aruba":"aw","Australia":"au","Austria":"at","Azerbaijan":"az","Bahamas":"bs","Bahrain":"bh","Bangladesh":"bd","Barbados":"bb","Belarus":"by","Belgium":"be","Belize":"bz","Benin":"bj","Bermuda":"bm","Bhutan":"bt","Bolivia":"bo","Bosnia and Herzegovina":"ba","Botswana":"bw","Bouvet Island":"bv","Brazil":"br","British Indian Ocean Territory":"io","Brunei Darussalam":"bn","Bulgaria":"bg","Burkina Faso":"bf","Burundi":"bi","Cambodia":"kh","Cameroon":"cm","Canada":"ca","Cape Verde":"cv","Cayman Islands":"ky","Central African Republic":"cf","Chad":"td","Chile":"cl","China":"cn","Christmas Island":"cx","Cocos (Keeling) Islands":"cc","Colombia":"co","Comoros":"km","Congo":"cg","Cook Islands":"ck","Costa Rica":"cr","Croatia":"hr","Cuba":"cu","Cyprus":"cy","Czech Republic":"cz","Denmark":"dk","Djibouti":"dj","Dominica":"dm","Dominican Republic":"do","Ecuador":"ec","Egypt":"eg","El Salvador":"sv","Equatorial Guinea":"gq","Eritrea":"er","Estonia":"ee","Ethiopia":"et","Falkland Islands":"fk","Faroe Islands":"fo","Fiji":"fj","Finland":"fi","France":"fr","French Guiana":"gf","French Polynesia":"pf","Gabon":"ga","Gambia":"gm","Georgia":"ge","Germany":"de","Ghana":"gh","Gibraltar":"gi","Greece":"gr","Greenland":"gl","Grenada":"gd","Guadeloupe":"gp","Guam":"gu","Guatemala":"gt","Guernsey":"gg","Guinea":"gn","Guinea-Bissau":"gw","Guyana":"gy","Haiti":"ht","Heard Island and McDonald Islands":"hm","Holy See (Vatican City State)":"va","Honduras":"hn","Hong Kong":"hk","Hungary":"hu","Iceland":"is","India":"in","Indonesia":"id","Iran":"ir","Iraq":"iq","Ireland":"ie","Isle of Man":"im","Israel":"il","Italy":"it","Jamaica":"jm","Japan":"jp","Jersey":"je","Jordan":"jo","Kazakhstan":"kz","Kenya":"ke","Kiribati":"ki","North Korea":"kp","South Korea":"kr","Kuwait":"kw","Kyrgyzstan":"kg","Laos":"la","Latvia":"lv","Lebanon":"lb","Lesotho":"ls","Liberia":"lr","Libya":"ly","Liechtenstein":"li","Lithuania":"lt","Luxembourg":"lu","Macao":"mo","Macedonia":"mk","Madagascar":"mg","Malawi":"mw","Malaysia":"my","Maldives":"mv","Mali":"ml","Malta":"mt","Marshall Islands":"mh","Martinique":"mq","Mauritania":"mr","Mauritius":"mu","Mayotte":"yt","Mexico":"mx","Micronesia":"fm","Moldova":"md","Monaco":"mc","Mongolia":"mn","Montenegro":"me","Montserrat":"ms","Morocco":"ma","Mozambique":"mz","Myanmar":"mm","Namibia":"na","Nauru":"nr","Nepal":"np","Netherlands":"nl","Netherlands Antilles":"an","New Caledonia":"nc","New Zealand":"nz","Nicaragua":"ni","Niger":"ne","Nigeria":"ng","Niue":"nu","Norfolk Island":"nf","Northern Mariana Islands":"mp","Norway":"no","Oman":"om","Pakistan":"pk","Palau":"pw","Palestinian Territory":"ps","Panama":"pa","Papua New Guinea":"pg","Paraguay":"py","Peru":"pe","Philippines":"ph","Pitcairn":"pn","Poland":"pl","Portugal":"pt","Puerto Rico":"pr","Qatar":"qa","Reunion":"re","Romania":"ro","Russia":"ru","Rwanda":"rw","Saint Helena":"sh","Saint Kitts and Nevis":"kn","Saint Lucia":"lc","Saint Pierre and Miquelon":"pm","Saint Vincent and the Grenadines":"vc","Samoa":"ws","San Marino":"sm","Sao Tome and Principe":"st","Saudi Arabia":"sa","Senegal":"sn","Serbia":"rs","Seychelles":"sc","Sierra Leone":"sl","Singapore":"sg","Slovakia":"sk","Slovenia":"si","Solomon Islands":"sb","Somalia":"so","South Africa":"za","South Georgia and the South Sandwich Islands":"gs","Spain":"es","Sri Lanka":"lk","Sudan":"sd","Suriname":"sr","Svalbard and Jan Mayen":"sj","Swaziland":"sz","Sweden":"se","Switzerland":"ch","Syria":"sy","Taiwan":"tw","Tajikistan":"tj","Tanzania":"tz","Thailand":"th","Timor-Leste":"tl","Togo":"tg","Tokelau":"tk","Tonga":"to","Trinidad and Tobago":"tt","Tunisia":"tn","Turkey":"tr","Turkmenistan":"tm","Turks and Caicos Islands":"tc","Tuvalu":"tv","Uganda":"ug","Ukraine":"ua","United Arab Emirates":"ae","UK":"gb","USA":"us","Uruguay":"uy","Uzbekistan":"uz","Vanuatu":"vu","Venezuela":"ve","Vietnam":"vn","Virgin Islands, British":"vg","Virgin Islands, U.S.":"vi","Wallis and Futuna":"wf","Western Sahara":"eh","Yemen":"ye","Zambia":"zm","Zimbabwe":"zw"};
 
-        // Default list based on your prompt
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
         let activeNames = [];
-        let currentCountry = "", currentMode = "";
+        let currentCountry = "";
 
-        // Initialize Data
         function init() {
             const saved = localStorage.getItem('selectedFlags');
             activeNames = saved ? JSON.parse(saved) : initialList;
@@ -89,6 +86,7 @@
                 gView.classList.remove('active-view');
                 aView.classList.add('active-view');
                 title.innerText = "Settings";
+                window.scrollTo(0,0);
             } else {
                 saveSettings();
             }
@@ -97,7 +95,7 @@
         function renderAdminList() {
             const list = document.getElementById('admin-list');
             list.innerHTML = "";
-            Object.keys(ALL_AVAILABLE).sort().forEach(name => {
+            Object.keys(ALL_ISO).sort().forEach(name => {
                 const div = document.createElement('div');
                 div.className = 'country-item';
                 const checked = activeNames.includes(name) ? 'checked' : '';
@@ -106,10 +104,19 @@
             });
         }
 
+        function filterCountries() {
+            const query = document.getElementById('country-search').value.toLowerCase();
+            document.querySelectorAll('.country-item').forEach(item => {
+                const name = item.innerText.toLowerCase();
+                item.style.display = name.includes(query) ? 'flex' : 'none';
+            });
+        }
+
         function saveSettings() {
             const selected = [];
-            Object.keys(ALL_AVAILABLE).forEach(name => {
-                if (document.getElementById(`chk-${name}`).checked) selected.push(name);
+            Object.keys(ALL_ISO).forEach(name => {
+                const chk = document.getElementById(`chk-${name}`);
+                if (chk && chk.checked) selected.push(name);
             });
 
             if (selected.length < 4) {
@@ -119,7 +126,6 @@
 
             activeNames = selected;
             localStorage.setItem('selectedFlags', JSON.stringify(selected));
-            
             document.getElementById('admin-view').classList.remove('active-view');
             document.getElementById('game-view').classList.add('active-view');
             document.getElementById('view-title').innerText = "Flag Fun!";
@@ -127,23 +133,21 @@
         }
 
         function play() {
-            if (activeNames.length === 0) return;
-            
-            currentMode = Math.random() > 0.5 ? 'id' : 'fetch';
+            const mode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
             grid.innerHTML = "";
             main.style.display = "none";
 
-            if (currentMode === 'id') {
+            if (mode === 'id') {
                 currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
                 document.getElementById('instruction').innerText = "Which flag is this?";
-                main.src = `https://flagcdn.com/w640/${ALL_AVAILABLE[currentCountry]}.png`;
+                main.src = `https://flagcdn.com/w640/${ALL_ISO[currentCountry]}.png`;
                 main.style.display = "block";
                 shuffle([currentCountry, ...pickWrong(currentCountry)]).forEach(n => createBtn(n, 'text', grid));
             } else {
                 let choices = shuffle([...activeNames]).slice(0, 4);
-                currentCountry = choices[Math.floor(Math.random() * choices.length)];
+                currentCountry = choices[Math.floor(Math.random() * 4)];
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
                 choices.forEach(n => createBtn(n, 'img', grid));
             }
@@ -152,7 +156,7 @@
         function createBtn(name, type, container) {
             const b = document.createElement('button');
             b.className = type === 'text' ? 'btn' : 'flag-btn';
-            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_AVAILABLE[name]}.png">`;
+            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
             b.onclick = () => {
                 const f = document.getElementById('feedback');
                 const win = name === currentCountry;
@@ -164,8 +168,7 @@
         }
 
         function pickWrong(c) { 
-            const pool = activeNames.filter(n => n !== c);
-            return shuffle(pool).slice(0, 3); 
+            return shuffle(activeNames.filter(n => n !== c)).slice(0, 3); 
         }
 
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
