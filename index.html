@@ -3,53 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flag Master</title>
+    <title>Flag Master Pro</title>
     <style>
         :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; }
-        body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; }
-        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        h1 { font-size: 1.2rem; margin: 0; color: #333; }
-        .admin-btn { font-size: 1.5rem; background: none; border: none; padding: 5px; cursor: pointer; }
-
-        .view { padding: 20px; display: none; }
+        body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; overflow-x: hidden; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; height: 50px; }
+        h1 { font-size: 1.1rem; margin: 0; color: #333; }
+        .admin-btn { font-size: 1.4rem; background: none; border: none; padding: 5px; cursor: pointer; }
+        .view { padding: 10px 20px; display: none; margin: 0 auto; max-width: 800px; }
         .active-view { display: block; }
-
-        /* Start Overlay */
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .play-btn { background: white; color: var(--primary); border: none; padding: 20px 50px; border-radius: 50px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-
-        /* Phonics Button Styling */
-        .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 22px 10px; font-size: 1.3rem; font-weight: 500; color: #333; cursor: pointer; }
-        .btn span { color: var(--accent); font-weight: 900; font-size: 1.6rem; border-right: 1px solid #eee; padding-right: 5px; margin-right: 5px; }
-        
-        #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; min-height: 2.5em; }
-        #instruction { font-size: 1.5rem; font-weight: bold; color: #2c3e50; margin: 0; }
-        .speaker-btn { font-size: 1.8rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 45px; height: 45px; display: none; align-items: center; justify-content: center; cursor: pointer; }
-
-        #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
-        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; height: 100px; cursor: pointer; }
-        .flag-btn img { max-width: 100%; max-height: 100%; border-radius: 4px; }
-
-        .admin-list { text-align: left; background: white; border-radius: 15px; max-width: 500px; margin: 10px auto; overflow: hidden; }
+        .play-btn { background: white; color: var(--primary); border: none; padding: 20px 50px; border-radius: 50px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; cursor: pointer; }
+        #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; min-height: 50px; }
+        #instruction { font-size: 1.4rem; font-weight: bold; color: #2c3e50; margin: 0; }
+        .speaker-btn { font-size: 1.6rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; }
+        #main-flag { width: auto; max-width: 90%; max-height: 40vh; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; object-fit: contain; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; width: 100%; }
+        .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 20px 10px; font-size: 1.2rem; font-weight: 600; color: #333; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn span { color: var(--accent); font-weight: 900; font-size: 1.5rem; padding-right: 5px; margin-right: 5px; border-right: 2px solid #eee; }
+        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; height: 150px; cursor: pointer; display: block; overflow: hidden; }
+        .flag-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
+        .admin-list { text-align: left; background: white; border-radius: 15px; margin: 10px auto; overflow: hidden; }
         .country-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
         .country-item input { width: 24px; height: 24px; margin-right: 15px; }
-        .flag-preview { width: 40px; height: 26px; margin-right: 12px; object-fit: contain; border: 1px solid #ddd; border-radius: 2px; background: #eee; }
-        .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; }
+        .flag-preview { width: 45px; height: 30px; margin-right: 12px; object-fit: contain; border: 1px solid #ddd; background: #eee; }
+        
+        /* Voice Selection Styling */
+        .voice-section { background: white; border-radius: 15px; padding: 15px; margin: 10px 0; border: 1px solid #ddd; }
+        #voice-select { width: 100%; padding: 10px; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
+        
+        .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; cursor: pointer; }
-
-        #celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: none; overflow: hidden; }
+        #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; }
+        #celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: none; }
         .confetti { position: absolute; width: 10px; height: 10px; top: -10%; animation: fall linear forwards; }
         @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
-        #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; }
     </style>
 </head>
 <body>
 
     <div id="start-overlay">
         <h1>Flag Master</h1>
-        <p>Ready to learn some flags?</p>
-        <button class="play-btn" onclick="startGame()">TAP TO START</button>
+        <button class="play-btn" onclick="startGame()">START</button>
     </div>
 
     <header>
@@ -67,10 +62,16 @@
     </div>
 
     <div id="admin-view" class="view">
-        <div style="padding: 10px; background: white; position: sticky; top: 54px; z-index: 99;">
-            <input type="text" id="country-search" placeholder="Search countries..." onkeyup="filterCountries()" style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+        <div class="voice-section">
+            <label style="font-weight: bold;">Choose Game Voice:</label>
+            <select id="voice-select" onchange="testVoiceSelection()"></select>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Natural sounding: Samantha, Karen, or Google voices.</p>
         </div>
-        <div class="admin-list" id="admin-list"></div>
+
+        <div style="padding: 10px; background: white; position: sticky; top: 50px; z-index: 99;">
+            <input type="text" id="country-search" placeholder="Search..." onkeyup="filterCountries()" style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
+        </div>
+        <div id="admin-list" class="admin-list"></div>
         <div class="save-area"><button class="save-btn" onclick="saveSettings()">Save & Play</button></div>
     </div>
 
@@ -81,21 +82,43 @@
         const ALL_ISO = {"Afghanistan":"af","Albania":"al","Algeria":"dz","American Samoa":"as","Andorra":"ad","Angola":"ao","Anguilla":"ai","Antarctica":"aq","Antigua and Barbuda":"ag","Argentina":"ar","Armenia":"am","Aruba":"aw","Australia":"au","Austria":"at","Azerbaijan":"az","Bahamas":"bs","Bahrain":"bh","Bangladesh":"bd","Barbados":"bb","Belarus":"by","Belgium":"be","Belize":"bz","Benin":"bj","Bermuda":"bm","Bhutan":"bt","Bolivia":"bo","Bosnia and Herzegovina":"ba","Botswana":"bw","Bouvet Island":"bv","Brazil":"br","British Indian Ocean Territory":"io","Brunei Darussalam":"bn","Bulgaria":"bg","Burkina Faso":"bf","Burundi":"bi","Cambodia":"kh","Cameroon":"cm","Canada":"ca","Cape Verde":"cv","Cayman Islands":"ky","Central African Republic":"cf","Chad":"td","Chile":"cl","China":"cn","Christmas Island":"cx","Cocos (Keeling) Islands":"cc","Colombia":"co","Comoros":"km","Congo":"cg","Cook Islands":"ck","Costa Rica":"cr","Croatia":"hr","Cuba":"cu","Cyprus":"cy","Czech Republic":"cz","Denmark":"dk","Djibouti":"dj","Dominica":"dm","Dominican Republic":"do","Ecuador":"ec","Egypt":"eg","El Salvador":"sv","Equatorial Guinea":"gq","Eritrea":"er","Estonia":"ee","Ethiopia":"et","Falkland Islands":"fk","Faroe Islands":"fo","Fiji":"fj","Finland":"fi","France":"fr","French Guiana":"gf","French Polynesia":"pf","Gabon":"ga","Gambia":"gm","Georgia":"ge","Germany":"de","Ghana":"gh","Gibraltar":"gi","Greece":"gr","Greenland":"gl","Grenada":"gd","Guadeloupe":"gp","Guam":"gu","Guatemala":"gt","Guernsey":"gg","Guinea":"gn","Guinea-Bissau":"gw","Guyana":"gy","Haiti":"ht","Heard Island and McDonald Islands":"hm","Holy See (Vatican City State)":"va","Honduras":"hn","Hong Kong":"hk","Hungary":"hu","Iceland":"is","India":"in","Indonesia":"id","Iran":"ir","Iraq":"iq","Ireland":"ie","Isle of Man":"im","Israel":"il","Italy":"it","Jamaica":"jm","Japan":"jp","Jersey":"je","Jordan":"jo","Kazakhstan":"kz","Kenya":"ke","Kiribati":"ki","North Korea":"kp","South Korea":"kr","Kuwait":"kw","Kyrgyzstan":"kg","Laos":"la","Latvia":"lv","Lebanon":"lb","Lesotho":"ls","Liberia":"lr","Libya":"ly","Liechtenstein":"li","Lithuania":"lt","Luxembourg":"lu","Macao":"mo","Macedonia":"mk","Madagascar":"mg","Malawi":"mw","Malaysia":"my","Maldives":"mv","Mali":"ml","Malta":"mt","Marshall Islands":"mh","Martinique":"mq","Mauritania":"mr","Mauritius":"mu","Mayotte":"yt","Mexico":"mx","Micronesia":"fm","Moldova":"md","Monaco":"mc","Mongolia":"mn","Montenegro":"me","Montserrat":"ms","Morocco":"ma","Mozambique":"mz","Myanmar":"mm","Namibia":"na","Nauru":"nr","Nepal":"np","Netherlands":"nl","Netherlands Antilles":"an","New Caledonia":"nc","New Zealand":"nz","Nicaragua":"ni","Niger":"ne","Nigeria":"ng","Niue":"nu","Norfolk Island":"nf","Northern Mariana Islands":"mp","Norway":"no","Oman":"om","Pakistan":"pk","Palau":"pw","Palestinian Territory":"ps","Panama":"pa","Papua New Guinea":"pg","Paraguay":"py","Peru":"pe","Philippines":"ph","Pitcairn":"pn","Poland":"pl","Portugal":"pt","Puerto Rico":"pr","Qatar":"qa","Reunion":"re","Romania":"ro","Russia":"ru","Rwanda":"rw","Saint Helena":"sh","Saint Kitts and Nevis":"kn","Saint Lucia":"lc","Saint Pierre and Miquelon":"pm","Saint Vincent and the Grenadines":"vc","Samoa":"ws","San Marino":"sm","Sao Tome and Principe":"st","Saudi Arabia":"sa","Senegal":"sn","Serbia":"rs","Seychelles":"sc","Sierra Leone":"sl","Singapore":"sg","Slovakia":"sk","Slovenia":"si","Solomon Islands":"sb","Somalia":"so","South Africa":"za","South Georgia and the South Sandwich Islands":"gs","Spain":"es","Sri Lanka":"lk","Sudan":"sd","Suriname":"sr","Svalbard and Jan Mayen":"sj","Swaziland":"sz","Sweden":"se","Switzerland":"ch","Syria":"sy","Taiwan":"tw","Tajikistan":"tj","Tanzania":"tz","Thailand":"th","Timor-Leste":"tl","Togo":"tg","Tokelau":"tk","Tonga":"to","Trinidad and Tobago":"tt","Tunisia":"tn","Turkey":"tr","Turkmenistan":"tm","Turks and Caicos Islands":"tc","Tuvalu":"tv","Uganda":"ug","Ukraine":"ua","United Arab Emirates":"ae","UK":"gb","USA":"us","Uruguay":"uy","Uzbekistan":"uz","Vanuatu":"vu","Venezuela":"ve","Vietnam":"vn","Virgin Islands, British":"vg","Virgin Islands, U.S.":"vi","Wallis and Futuna":"wf","Western Sahara":"eh","Yemen":"ye","Zambia":"zm","Zimbabwe":"zw"};
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
-        let activeNames = [];
-        let currentCountry = "";
-        let isProcessing = false;
-        let audioCtx = null;
-        let preferredVoice = null;
+        let activeNames = [], currentCountry = "", isProcessing = false, audioCtx = null, preferredVoice = null;
 
-        window.speechSynthesis.onvoiceschanged = () => {
+        // --- IMPROVED VOICE SELECTION ---
+        function populateVoiceList() {
             const voices = window.speechSynthesis.getVoices();
-            preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.startsWith("en")) || 
-                             voices.find(v => v.name.includes("Natural") && v.lang.startsWith("en")) ||
-                             voices.find(v => v.lang.startsWith("en"));
-        };
+            const select = document.getElementById('voice-select');
+            const savedVoiceName = localStorage.getItem('preferredVoiceName');
+            
+            select.innerHTML = "";
+            voices.filter(v => v.lang.startsWith("en")).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.name;
+                opt.innerText = v.name + (v.name.includes("Enhanced") ? " (HD)" : "");
+                if (v.name === savedVoiceName) opt.selected = true;
+                select.appendChild(opt);
+            });
+            updatePreferredVoice();
+        }
+
+        function updatePreferredVoice() {
+            const name = document.getElementById('voice-select').value;
+            preferredVoice = window.speechSynthesis.getVoices().find(v => v.name === name);
+            if (name) localStorage.setItem('preferredVoiceName', name);
+        }
+
+        function testVoiceSelection() {
+            updatePreferredVoice();
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance("This is my new voice.");
+            if (preferredVoice) utterance.voice = preferredVoice;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        window.speechSynthesis.onvoiceschanged = populateVoiceList;
 
         function startGame() {
-            initAudio();
+            initAudio(); populateVoiceList();
             document.getElementById('start-overlay').style.display = 'none';
             init();
         }
@@ -103,8 +126,7 @@
         function init() {
             const saved = localStorage.getItem('selectedFlags');
             activeNames = saved ? JSON.parse(saved) : initialList;
-            renderAdminList();
-            play();
+            renderAdminList(); play();
         }
 
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
@@ -114,43 +136,37 @@
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(currentCountry);
             if (preferredVoice) utterance.voice = preferredVoice;
-            utterance.rate = 0.8;
-            window.speechSynthesis.speak(utterance);
+            utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
         }
 
         function playSfx(win) {
             initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+            const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
             osc.frequency.setValueAtTime(win ? 587 : 150, audioCtx.currentTime);
             if(win) osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (win ? 0.4 : 0.2));
+            gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (win ? 0.4 : 0.2));
             osc.start(); osc.stop(audioCtx.currentTime + (win ? 0.4 : 0.2));
         }
 
         function play() {
-            isProcessing = false;
-            const mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            isProcessing = false; const mode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
             const speaker = document.getElementById('main-speaker');
-            grid.innerHTML = ""; main.style.display = "none";
-            speaker.style.display = "none"; // Default hide
+            grid.innerHTML = ""; main.style.display = "none"; speaker.style.display = "none";
 
             if (mode === 'id') {
                 currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
                 document.getElementById('instruction').innerText = "Which flag is this?";
                 main.src = `https://flagcdn.com/w640/${ALL_ISO[currentCountry]}.png`;
                 main.style.display = "block";
-                
                 const firstLetter = currentCountry[0];
                 const choices = [currentCountry];
                 const pool = activeNames.filter(n => n[0] !== firstLetter);
                 let shuffledPool = shuffle([...pool]);
                 let usedLetters = [firstLetter];
-                
                 for(let c of shuffledPool) {
                     if(choices.length >= 4) break;
                     if(!usedLetters.includes(c[0])) { choices.push(c); usedLetters.push(c[0]); }
@@ -160,8 +176,7 @@
                 let choices = shuffle([...activeNames]).slice(0, 4);
                 currentCountry = choices[Math.floor(Math.random() * 4)];
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
-                speaker.style.display = "flex"; // Show speaker only in FIND mode
-                speakCountry();
+                speaker.style.display = "flex"; speakCountry();
                 choices.forEach(n => createBtn(n, 'img', grid));
             }
         }
@@ -169,34 +184,25 @@
         function createBtn(name, type, container) {
             const b = document.createElement('button');
             b.className = type === 'text' ? 'btn' : 'flag-btn';
-            if(type === 'text') {
-                b.innerHTML = `<span>${name[0]}</span>${name.substring(1)}`;
-            } else {
-                b.innerHTML = `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
-            }
+            if(type === 'text') b.innerHTML = `<span>${name[0]}</span>${name.substring(1)}`;
+            else b.innerHTML = `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
             b.onclick = () => {
-                if (isProcessing) return;
-                isProcessing = true;
+                if (isProcessing) return; isProcessing = true;
                 const win = name === currentCountry;
                 const icon = document.getElementById('feedback-icon');
                 playSfx(win);
                 if (win) { startCelebration(); icon.innerText = "🌟"; } else { icon.innerText = "❌"; }
                 icon.style.display = 'block';
-                setTimeout(() => { 
-                    icon.style.display = "none"; stopCelebration();
-                    if(win) play(); else isProcessing = false;
-                }, win ? 1200 : 600);
+                setTimeout(() => { icon.style.display = "none"; stopCelebration(); if(win) play(); else isProcessing = false; }, win ? 1200 : 600);
             };
             container.appendChild(b);
         }
 
         function renderAdminList() {
             const list = document.getElementById('admin-list');
-            if(!list) return;
-            list.innerHTML = "";
+            if(!list) return; list.innerHTML = "";
             Object.keys(ALL_ISO).sort().forEach(name => {
-                const div = document.createElement('div');
-                div.className = 'country-item';
+                const div = document.createElement('div'); div.className = 'country-item';
                 div.innerHTML = `<input type="checkbox" id="chk-${name}" ${activeNames.includes(name)?'checked':''}>
                     <img class="flag-preview" src="https://flagcdn.com/w80/${ALL_ISO[name]}.png">
                     <label for="chk-${name}">${name}</label>`;
@@ -224,8 +230,7 @@
             if (selected.length < 4) { alert("Select at least 4 flags!"); return; }
             activeNames = selected;
             localStorage.setItem('selectedFlags', JSON.stringify(selected));
-            toggleView();
-            play();
+            toggleView(); play();
         }
 
         function startCelebration() {
@@ -235,7 +240,7 @@
                 conf.style.left = Math.random() * 100 + 'vw';
                 conf.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
                 conf.style.animationDuration = (Math.random() * 1.5 + 0.8) + 's';
-                conf.style.width = (Math.random() * 8 + 5) + 'px'; conf.style.height = conf.style.width;
+                conf.style.width = '10px'; conf.style.height = '10px';
                 c.appendChild(conf);
             }
         }
