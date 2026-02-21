@@ -3,42 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flag Master</title>
+    <title>Flag Master Phonics</title>
     <style>
-        :root { --primary: #007bff; --bg: #f0f2f5; --success: #28a745; }
+        :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; }
         body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; }
         header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
         h1 { font-size: 1.2rem; margin: 0; color: #333; }
-        .admin-btn { font-size: 1.5rem; background: none; border: none; padding: 5px; outline: none; }
+        .admin-btn { font-size: 1.5rem; background: none; border: none; padding: 5px; }
 
         .view { padding: 20px; display: none; }
         .active-view { display: block; }
 
-        #search-container { padding: 10px; background: white; border-bottom: 1px solid #ddd; position: sticky; top: 54px; z-index: 99; }
-        #country-search { width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; margin-bottom: 10px; }
-        .bulk-actions { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
-        .small-btn { padding: 5px 15px; font-size: 0.8rem; border-radius: 15px; border: 1px solid #ccc; background: #fff; }
-
+        /* Phonics Button Styling */
+        .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 22px 10px; font-size: 1.3rem; font-weight: 500; color: #333; }
+        .btn span { color: var(--accent); font-weight: 900; font-size: 1.6rem; border-right: 1px solid #eee; padding-right: 5px; margin-right: 5px; }
+        
         #instruction { font-size: 1.5rem; font-weight: bold; margin: 20px 0; min-height: 1.5em; color: #2c3e50; }
         #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 22px 10px; font-size: 1.1rem; font-weight: 600; color: var(--primary); }
-        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; height: 100px;}
+        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; height: 100px; }
         .flag-btn img { max-width: 100%; max-height: 100%; border-radius: 4px; }
 
+        /* Settings List */
         .admin-list { text-align: left; background: white; border-radius: 15px; max-width: 500px; margin: 10px auto; overflow: hidden; }
         .country-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
         .country-item input { width: 24px; height: 24px; margin-right: 15px; flex-shrink: 0; }
         .flag-preview { width: 40px; height: 26px; margin-right: 12px; object-fit: contain; border: 1px solid #ddd; border-radius: 2px; flex-shrink: 0; background: #eee; }
-        
         .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; }
 
+        /* Feedback UI */
         #celebration { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; display: none; overflow: hidden; }
         .confetti { position: absolute; width: 10px; height: 10px; top: -10%; animation: fall linear forwards; }
         @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
-
-        #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+        #feedback-icon { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1001; }
     </style>
 </head>
 <body>
@@ -55,17 +53,11 @@
     </div>
 
     <div id="admin-view" class="view">
-        <div id="search-container">
-            <input type="text" id="country-search" placeholder="Search countries..." onkeyup="filterCountries()">
-            <div class="bulk-actions">
-                <button class="small-btn" onclick="bulk(true)">Select All</button>
-                <button class="small-btn" onclick="bulk(false)">Deselect All</button>
-            </div>
+        <div style="padding: 10px; background: white; position: sticky; top: 54px; z-index: 99;">
+            <input type="text" id="country-search" placeholder="Search countries..." onkeyup="filterCountries()" style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
         </div>
         <div class="admin-list" id="admin-list"></div>
-        <div class="save-area">
-            <button class="save-btn" onclick="saveSettings()">Save & Play</button>
-        </div>
+        <div class="save-area"><button class="save-btn" onclick="saveSettings()">Save & Play</button></div>
     </div>
 
     <div id="celebration"></div>
@@ -73,7 +65,6 @@
 
     <script>
         const ALL_ISO = {"Afghanistan":"af","Albania":"al","Algeria":"dz","American Samoa":"as","Andorra":"ad","Angola":"ao","Anguilla":"ai","Antarctica":"aq","Antigua and Barbuda":"ag","Argentina":"ar","Armenia":"am","Aruba":"aw","Australia":"au","Austria":"at","Azerbaijan":"az","Bahamas":"bs","Bahrain":"bh","Bangladesh":"bd","Barbados":"bb","Belarus":"by","Belgium":"be","Belize":"bz","Benin":"bj","Bermuda":"bm","Bhutan":"bt","Bolivia":"bo","Bosnia and Herzegovina":"ba","Botswana":"bw","Bouvet Island":"bv","Brazil":"br","British Indian Ocean Territory":"io","Brunei Darussalam":"bn","Bulgaria":"bg","Burkina Faso":"bf","Burundi":"bi","Cambodia":"kh","Cameroon":"cm","Canada":"ca","Cape Verde":"cv","Cayman Islands":"ky","Central African Republic":"cf","Chad":"td","Chile":"cl","China":"cn","Christmas Island":"cx","Cocos (Keeling) Islands":"cc","Colombia":"co","Comoros":"km","Congo":"cg","Cook Islands":"ck","Costa Rica":"cr","Croatia":"hr","Cuba":"cu","Cyprus":"cy","Czech Republic":"cz","Denmark":"dk","Djibouti":"dj","Dominica":"dm","Dominican Republic":"do","Ecuador":"ec","Egypt":"eg","El Salvador":"sv","Equatorial Guinea":"gq","Eritrea":"er","Estonia":"ee","Ethiopia":"et","Falkland Islands":"fk","Faroe Islands":"fo","Fiji":"fj","Finland":"fi","France":"fr","French Guiana":"gf","French Polynesia":"pf","Gabon":"ga","Gambia":"gm","Georgia":"ge","Germany":"de","Ghana":"gh","Gibraltar":"gi","Greece":"gr","Greenland":"gl","Grenada":"gd","Guadeloupe":"gp","Guam":"gu","Guatemala":"gt","Guernsey":"gg","Guinea":"gn","Guinea-Bissau":"gw","Guyana":"gy","Haiti":"ht","Heard Island and McDonald Islands":"hm","Holy See (Vatican City State)":"va","Honduras":"hn","Hong Kong":"hk","Hungary":"hu","Iceland":"is","India":"in","Indonesia":"id","Iran":"ir","Iraq":"iq","Ireland":"ie","Isle of Man":"im","Israel":"il","Italy":"it","Jamaica":"jm","Japan":"jp","Jersey":"je","Jordan":"jo","Kazakhstan":"kz","Kenya":"ke","Kiribati":"ki","North Korea":"kp","South Korea":"kr","Kuwait":"kw","Kyrgyzstan":"kg","Laos":"la","Latvia":"lv","Lebanon":"lb","Lesotho":"ls","Liberia":"lr","Libya":"ly","Liechtenstein":"li","Lithuania":"lt","Luxembourg":"lu","Macao":"mo","Macedonia":"mk","Madagascar":"mg","Malawi":"mw","Malaysia":"my","Maldives":"mv","Mali":"ml","Malta":"mt","Marshall Islands":"mh","Martinique":"mq","Mauritania":"mr","Mauritius":"mu","Mayotte":"yt","Mexico":"mx","Micronesia":"fm","Moldova":"md","Monaco":"mc","Mongolia":"mn","Montenegro":"me","Montserrat":"ms","Morocco":"ma","Mozambique":"mz","Myanmar":"mm","Namibia":"na","Nauru":"nr","Nepal":"np","Netherlands":"nl","Netherlands Antilles":"an","New Caledonia":"nc","New Zealand":"nz","Nicaragua":"ni","Niger":"ne","Nigeria":"ng","Niue":"nu","Norfolk Island":"nf","Northern Mariana Islands":"mp","Norway":"no","Oman":"om","Pakistan":"pk","Palau":"pw","Palestinian Territory":"ps","Panama":"pa","Papua New Guinea":"pg","Paraguay":"py","Peru":"pe","Philippines":"ph","Pitcairn":"pn","Poland":"pl","Portugal":"pt","Puerto Rico":"pr","Qatar":"qa","Reunion":"re","Romania":"ro","Russia":"ru","Rwanda":"rw","Saint Helena":"sh","Saint Kitts and Nevis":"kn","Saint Lucia":"lc","Saint Pierre and Miquelon":"pm","Saint Vincent and the Grenadines":"vc","Samoa":"ws","San Marino":"sm","Sao Tome and Principe":"st","Saudi Arabia":"sa","Senegal":"sn","Serbia":"rs","Seychelles":"sc","Sierra Leone":"sl","Singapore":"sg","Slovakia":"sk","Slovenia":"si","Solomon Islands":"sb","Somalia":"so","South Africa":"za","South Georgia and the South Sandwich Islands":"gs","Spain":"es","Sri Lanka":"lk","Sudan":"sd","Suriname":"sr","Svalbard and Jan Mayen":"sj","Swaziland":"sz","Sweden":"se","Switzerland":"ch","Syria":"sy","Taiwan":"tw","Tajikistan":"tj","Tanzania":"tz","Thailand":"th","Timor-Leste":"tl","Togo":"tg","Tokelau":"tk","Tonga":"to","Trinidad and Tobago":"tt","Tunisia":"tn","Turkey":"tr","Turkmenistan":"tm","Turks and Caicos Islands":"tc","Tuvalu":"tv","Uganda":"ug","Ukraine":"ua","United Arab Emirates":"ae","UK":"gb","USA":"us","Uruguay":"uy","Uzbekistan":"uz","Vanuatu":"vu","Venezuela":"ve","Vietnam":"vn","Virgin Islands, British":"vg","Virgin Islands, U.S.":"vi","Wallis and Futuna":"wf","Western Sahara":"eh","Yemen":"ye","Zambia":"zm","Zimbabwe":"zw"};
-
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
         let activeNames = [];
@@ -88,115 +79,50 @@
             play();
         }
 
-        // --- AUDIO ENGINE ---
-        function initAudio() {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-
-        function playSuccessSound() {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
+        // --- AUDIO ---
+        function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        function playSfx(win) {
+            initAudio(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain();
             osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-            osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+            osc.frequency.setValueAtTime(win ? 587 : 150, audioCtx.currentTime);
+            if(win) osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.1);
             gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (win ? 0.4 : 0.2));
+            osc.start(); osc.stop(audioCtx.currentTime + (win ? 0.4 : 0.2));
         }
 
-        function playErrorSound() {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-            osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.2);
-        }
-
-        // --- NAVIGATION ---
-        function toggleView() {
-            const gView = document.getElementById('game-view');
-            const aView = document.getElementById('admin-view');
-            const title = document.getElementById('view-title');
-            if (gView.classList.contains('active-view')) {
-                gView.classList.remove('active-view');
-                aView.classList.add('active-view');
-                title.innerText = "Settings";
-                window.scrollTo(0,0);
-            } else {
-                saveSettings();
-            }
-        }
-
-        function renderAdminList() {
-            const list = document.getElementById('admin-list');
-            list.innerHTML = "";
-            Object.keys(ALL_ISO).sort().forEach(name => {
-                const div = document.createElement('div');
-                div.className = 'country-item';
-                const checked = activeNames.includes(name) ? 'checked' : '';
-                const code = ALL_ISO[name];
-                div.innerHTML = `
-                    <input type="checkbox" id="chk-${name}" ${checked}>
-                    <img class="flag-preview" src="https://flagcdn.com/w80/${code}.png" loading="lazy">
-                    <label for="chk-${name}">${name}</label>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function bulk(val) {
-            document.querySelectorAll('#admin-list input[type="checkbox"]').forEach(c => {
-                if(c.parentElement.style.display !== 'none') c.checked = val;
-            });
-        }
-
-        function filterCountries() {
-            const query = document.getElementById('country-search').value.toLowerCase();
-            document.querySelectorAll('.country-item').forEach(item => {
-                const name = item.innerText.toLowerCase();
-                item.style.display = name.includes(query) ? 'flex' : 'none';
-            });
-        }
-
-        function saveSettings() {
-            initAudio(); // Activate audio context on user interaction
-            const selected = [];
-            Object.keys(ALL_ISO).forEach(name => {
-                const chk = document.getElementById(`chk-${name}`);
-                if (chk && chk.checked) selected.push(name);
-            });
-            if (selected.length < 4) { alert("Select at least 4 flags!"); return; }
-            activeNames = selected;
-            localStorage.setItem('selectedFlags', JSON.stringify(selected));
-            document.getElementById('admin-view').classList.remove('active-view');
-            document.getElementById('game-view').classList.add('active-view');
-            document.getElementById('view-title').innerText = "Flag Fun!";
-            play();
-        }
-
-        // --- GAMEPLAY ---
+        // --- GAMEPLAY LOGIC ---
         function play() {
             isProcessing = false;
             const mode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
-            grid.innerHTML = "";
-            main.style.display = "none";
+            grid.innerHTML = ""; main.style.display = "none";
 
             if (mode === 'id') {
                 currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
                 document.getElementById('instruction').innerText = "Which flag is this?";
                 main.src = `https://flagcdn.com/w640/${ALL_ISO[currentCountry]}.png`;
                 main.style.display = "block";
-                shuffle([currentCountry, ...pickWrong(currentCountry)]).forEach(n => createBtn(n, 'text', grid));
+                
+                // --- PHONICS FILTERING ---
+                const firstLetter = currentCountry[0];
+                const choices = [currentCountry];
+                const pool = activeNames.filter(n => n[0] !== firstLetter); // Remove all same-letter countries
+                
+                // Pick 3 more with unique first letters
+                let shuffledPool = shuffle([...pool]);
+                let usedLetters = [firstLetter];
+                
+                for(let c of shuffledPool) {
+                    if(choices.length >= 4) break;
+                    if(!usedLetters.includes(c[0])) {
+                        choices.push(c);
+                        usedLetters.push(c[0]);
+                    }
+                }
+                
+                shuffle(choices).forEach(n => createBtn(n, 'text', grid));
             } else {
                 let choices = shuffle([...activeNames]).slice(0, 4);
                 currentCountry = choices[Math.floor(Math.random() * 4)];
@@ -208,53 +134,79 @@
         function createBtn(name, type, container) {
             const b = document.createElement('button');
             b.className = type === 'text' ? 'btn' : 'flag-btn';
-            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
+            
+            if(type === 'text') {
+                // Wrap first letter in a span for coloring
+                b.innerHTML = `<span>${name[0]}</span>${name.substring(1)}`;
+            } else {
+                b.innerHTML = `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
+            }
+
             b.onclick = () => {
                 if (isProcessing) return;
                 isProcessing = true;
-                
                 const win = name === currentCountry;
                 const icon = document.getElementById('feedback-icon');
-                
-                if (win) {
-                    playSuccessSound();
-                    startCelebration();
-                    icon.innerText = "🌟";
-                } else {
-                    playErrorSound();
-                    icon.innerText = "❌";
-                }
-                
+                playSfx(win);
+                if (win) { startCelebration(); icon.innerText = "🌟"; } else { icon.innerText = "❌"; }
                 icon.style.display = 'block';
                 setTimeout(() => { 
                     icon.style.display = "none"; 
                     stopCelebration();
-                    if(win) play(); 
-                    else isProcessing = false;
+                    if(win) play(); else isProcessing = false;
                 }, win ? 1200 : 600);
             };
             container.appendChild(b);
         }
 
-        // --- VISUALS ---
+        // --- HELPERS & SETTINGS ---
+        function renderAdminList() {
+            const list = document.getElementById('admin-list');
+            list.innerHTML = "";
+            Object.keys(ALL_ISO).sort().forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'country-item';
+                div.innerHTML = `<input type="checkbox" id="chk-${name}" ${activeNames.includes(name)?'checked':''}>
+                    <img class="flag-preview" src="https://flagcdn.com/w80/${ALL_ISO[name]}.png">
+                    <label for="chk-${name}">${name}</label>`;
+                list.appendChild(div);
+            });
+        }
+
+        function saveSettings() {
+            const selected = [];
+            Object.keys(ALL_ISO).forEach(name => { if(document.getElementById(`chk-${name}`).checked) selected.push(name); });
+            if (selected.length < 4) { alert("Select at least 4!"); return; }
+            activeNames = selected;
+            localStorage.setItem('selectedFlags', JSON.stringify(selected));
+            toggleView();
+        }
+
+        function toggleView() {
+            document.getElementById('game-view').classList.toggle('active-view');
+            document.getElementById('admin-view').classList.toggle('active-view');
+            document.getElementById('view-title').innerText = document.getElementById('game-view').classList.contains('active-view') ? "Flag Fun!" : "Settings";
+        }
+
+        function filterCountries() {
+            const q = document.getElementById('country-search').value.toLowerCase();
+            document.querySelectorAll('.country-item').forEach(i => i.style.display = i.innerText.toLowerCase().includes(q) ? 'flex' : 'none');
+        }
+
         function startCelebration() {
-            const container = document.getElementById('celebration');
-            container.innerHTML = ""; container.style.display = 'block';
+            const c = document.getElementById('celebration'); c.innerHTML = ""; c.style.display = 'block';
             for (let i = 0; i < 40; i++) {
-                const conf = document.createElement('div');
-                conf.className = 'confetti';
+                const conf = document.createElement('div'); conf.className = 'confetti';
                 conf.style.left = Math.random() * 100 + 'vw';
                 conf.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
                 conf.style.animationDuration = (Math.random() * 1.5 + 0.8) + 's';
-                conf.style.width = (Math.random() * 8 + 5) + 'px';
-                conf.style.height = conf.style.width;
-                container.appendChild(conf);
+                conf.style.width = (Math.random() * 8 + 5) + 'px'; conf.style.height = conf.style.width;
+                c.appendChild(conf);
             }
         }
-
         function stopCelebration() { document.getElementById('celebration').style.display = 'none'; }
-        function pickWrong(c) { return shuffle(activeNames.filter(n => n !== c)).slice(0, 3); }
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
+        function pickWrong(c) { return shuffle(activeNames.filter(n => n !== c)).slice(0, 3); }
 
         init();
     </script>
