@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flag Master Pro</title>
+    <title>Flag Master</title>
     <style>
         :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; }
         body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; }
@@ -22,16 +22,15 @@
         .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 22px 10px; font-size: 1.3rem; font-weight: 500; color: #333; cursor: pointer; }
         .btn span { color: var(--accent); font-weight: 900; font-size: 1.6rem; border-right: 1px solid #eee; padding-right: 5px; margin-right: 5px; }
         
-        #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; min-height: 2em; }
+        #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 20px 0; min-height: 2.5em; }
         #instruction { font-size: 1.5rem; font-weight: bold; color: #2c3e50; margin: 0; }
-        .speaker-btn { font-size: 1.8rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .speaker-btn { font-size: 1.8rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 45px; height: 45px; display: none; align-items: center; justify-content: center; cursor: pointer; }
 
         #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; }
         .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; height: 100px; cursor: pointer; }
         .flag-btn img { max-width: 100%; max-height: 100%; border-radius: 4px; }
 
-        /* Admin/Settings List */
         .admin-list { text-align: left; background: white; border-radius: 15px; max-width: 500px; margin: 10px auto; overflow: hidden; }
         .country-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
         .country-item input { width: 24px; height: 24px; margin-right: 15px; }
@@ -61,7 +60,7 @@
     <div id="game-view" class="view active-view">
         <div id="instruction-container">
             <p id="instruction">Loading...</p>
-            <button class="speaker-btn" onclick="speakCountry()">🔊</button>
+            <button id="main-speaker" class="speaker-btn" onclick="speakCountry()">🔊</button>
         </div>
         <img id="main-flag" src="">
         <div id="options-container" class="options-grid"></div>
@@ -88,13 +87,10 @@
         let audioCtx = null;
         let preferredVoice = null;
 
-        // Pre-load voices (browsers load these asynchronously)
         window.speechSynthesis.onvoiceschanged = () => {
             const voices = window.speechSynthesis.getVoices();
-            // Look for Google voices first (usually best on Android), then "Natural" or "Premium"
             preferredVoice = voices.find(v => v.name.includes("Google") && v.lang.startsWith("en")) || 
                              voices.find(v => v.name.includes("Natural") && v.lang.startsWith("en")) ||
-                             voices.find(v => v.name.includes("Premium") && v.lang.startsWith("en")) ||
                              voices.find(v => v.lang.startsWith("en"));
         };
 
@@ -117,11 +113,8 @@
             if (!currentCountry) return;
             window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(currentCountry);
-            
             if (preferredVoice) utterance.voice = preferredVoice;
-            
-            utterance.rate = 0.8; // Slightly slower for clarity
-            utterance.pitch = 1.0; 
+            utterance.rate = 0.8;
             window.speechSynthesis.speak(utterance);
         }
 
@@ -142,7 +135,9 @@
             const mode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
+            const speaker = document.getElementById('main-speaker');
             grid.innerHTML = ""; main.style.display = "none";
+            speaker.style.display = "none"; // Default hide
 
             if (mode === 'id') {
                 currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
@@ -165,6 +160,7 @@
                 let choices = shuffle([...activeNames]).slice(0, 4);
                 currentCountry = choices[Math.floor(Math.random() * 4)];
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
+                speaker.style.display = "flex"; // Show speaker only in FIND mode
                 speakCountry();
                 choices.forEach(n => createBtn(n, 'img', grid));
             }
