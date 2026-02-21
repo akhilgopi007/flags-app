@@ -55,7 +55,7 @@
     <div id="game-view" class="view active-view">
         <div id="instruction-container">
             <p id="instruction">Loading...</p>
-            <button id="main-speaker" class="speaker-btn" onclick="speakCountry()">🔊</button>
+            <button id="main-speaker" class="speaker-btn" onclick="speakSpecific(currentCountry)">🔊</button>
         </div>
         <img id="main-flag" src="">
         <div id="options-container" class="options-grid"></div>
@@ -67,7 +67,6 @@
             <select id="voice-select" onchange="testVoiceSelection()"></select>
             <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">Natural sounding: Samantha, Karen, or Google voices.</p>
         </div>
-
         <div style="padding: 10px; background: white; position: sticky; top: 50px; z-index: 99;">
             <input type="text" id="country-search" placeholder="Search..." onkeyup="filterCountries()" style="width: 90%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem;">
         </div>
@@ -84,17 +83,14 @@
 
         let activeNames = [], currentCountry = "", isProcessing = false, audioCtx = null, preferredVoice = null;
 
-        // --- IMPROVED VOICE SELECTION ---
         function populateVoiceList() {
             const voices = window.speechSynthesis.getVoices();
             const select = document.getElementById('voice-select');
             const savedVoiceName = localStorage.getItem('preferredVoiceName');
-            
             select.innerHTML = "";
             voices.filter(v => v.lang.startsWith("en")).forEach(v => {
                 const opt = document.createElement('option');
-                opt.value = v.name;
-                opt.innerText = v.name + (v.name.includes("Enhanced") ? " (HD)" : "");
+                opt.value = v.name; opt.innerText = v.name;
                 if (v.name === savedVoiceName) opt.selected = true;
                 select.appendChild(opt);
             });
@@ -109,10 +105,7 @@
 
         function testVoiceSelection() {
             updatePreferredVoice();
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance("This is my new voice.");
-            if (preferredVoice) utterance.voice = preferredVoice;
-            window.speechSynthesis.speak(utterance);
+            speakSpecific("This is my new voice.");
         }
 
         window.speechSynthesis.onvoiceschanged = populateVoiceList;
@@ -131,10 +124,10 @@
 
         function initAudio() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); }
         
-        function speakCountry() {
-            if (!currentCountry) return;
+        function speakSpecific(text) {
+            if (!text) return;
             window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(currentCountry);
+            const utterance = new SpeechSynthesisUtterance(text);
             if (preferredVoice) utterance.voice = preferredVoice;
             utterance.rate = 0.8; window.speechSynthesis.speak(utterance);
         }
@@ -176,7 +169,7 @@
                 let choices = shuffle([...activeNames]).slice(0, 4);
                 currentCountry = choices[Math.floor(Math.random() * 4)];
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
-                speaker.style.display = "flex"; speakCountry();
+                speaker.style.display = "flex"; speakSpecific(currentCountry);
                 choices.forEach(n => createBtn(n, 'img', grid));
             }
         }
@@ -186,8 +179,14 @@
             b.className = type === 'text' ? 'btn' : 'flag-btn';
             if(type === 'text') b.innerHTML = `<span>${name[0]}</span>${name.substring(1)}`;
             else b.innerHTML = `<img src="https://flagcdn.com/w320/${ALL_ISO[name]}.png">`;
+            
             b.onclick = () => {
-                if (isProcessing) return; isProcessing = true;
+                if (isProcessing) return;
+                
+                // --- NEW VOICE FEEDBACK FOR TEXT BUTTONS ---
+                if(type === 'text') speakSpecific(name);
+                
+                isProcessing = true;
                 const win = name === currentCountry;
                 const icon = document.getElementById('feedback-icon');
                 playSfx(win);
@@ -246,7 +245,6 @@
         }
         function stopCelebration() { document.getElementById('celebration').style.display = 'none'; }
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
-        function pickWrong(c) { return shuffle(activeNames.filter(n => n !== c)).slice(0, 3); }
     </script>
 </body>
 </html>
