@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Flag Master</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding: 20px; touch-action: manipulation; }
+        .container { max-width: 500px; margin: 0 auto; }
+        #instruction { font-size: 1.5rem; font-weight: bold; margin: 25px 0; min-height: 1.5em; color: #2c3e50; }
+        #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        .btn { background: white; border: 2px solid #007bff; border-radius: 12px; padding: 22px 10px; font-size: 1.2rem; font-weight: 600; color: #007bff; }
+        .btn:active { transform: scale(0.95); background: #e7f3ff; }
+        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .flag-btn img { width: 100%; height: auto; border-radius: 6px; }
+        #feedback { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="instruction">Loading...</div>
+        <img id="main-flag" src="">
+        <div id="options-container" class="options-grid"></div>
+    </div>
+    <div id="feedback"></div>
+
+    <script>
+        // Move countries from NEW_FLAGS to FLAGS as he learns them!
+        const FLAGS = {
+            "Israel": "il", "Norway": "no", "Bangladesh": "bd", "Mexico": "mx", "Germany": "de", "Canada": "ca",
+            "Brazil": "br", "Austria": "at", "Georgia": "ge", "Greece": "gr", "Kenya": "ke", "Saudi Arabia": "sa",
+            "Spain": "es", "Egypt": "eg", "Nepal": "np", "Japan": "jp", "China": "cn", "South Korea": "kr",
+            "UK": "gb", "Portugal": "pt", "India": "in", "Argentina": "ar", "Russia": "ru", "France": "fr"
+        };
+        const NEW_FLAGS = { "Italy": "it", "Australia": "au" };
+        const ALL_FLAGS = { ...FLAGS, ...NEW_FLAGS };
+        const NAMES = Object.keys(ALL_FLAGS);
+        let current = "", mode = "";
+
+        function play() {
+            mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            const grid = document.getElementById('options-container');
+            const main = document.getElementById('main-flag');
+            grid.innerHTML = "";
+            main.style.display = "none";
+
+            if (mode === 'id') {
+                current = NAMES[Math.floor(Math.random() * NAMES.length)];
+                document.getElementById('instruction').innerText = "Which flag is this?";
+                main.src = `https://flagcdn.com/w640/${ALL_FLAGS[current]}.png`;
+                main.style.display = "block";
+                shuffle([current, ...pickWrong(current)]).forEach(n => createBtn(n, 'text', grid));
+            } else {
+                let choices = shuffle([...NAMES]).slice(0, 4);
+                current = choices[Math.floor(Math.random() * 4)];
+                document.getElementById('instruction').innerText = `Find: ${current}`;
+                choices.forEach(n => createBtn(n, 'img', grid));
+            }
+        }
+
+        function createBtn(name, type, container) {
+            const b = document.createElement('button');
+            b.className = type === 'text' ? 'btn' : 'flag-btn';
+            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_FLAGS[name]}.png">`;
+            b.onclick = () => {
+                const f = document.getElementById('feedback');
+                const win = name === current;
+                f.innerText = win ? "🌟" : "❌";
+                f.style.display = "block";
+                setTimeout(() => { f.style.display = "none"; if(win) play(); }, win ? 800 : 400);
+            };
+            container.appendChild(b);
+        }
+
+        function pickWrong(c) { return shuffle(NAMES.filter(n => n !== c)).slice(0, 3); }
+        function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
+        play();
+    </script>
+</body>
+</html>
+
