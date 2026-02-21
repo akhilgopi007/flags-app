@@ -3,58 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flag Master</title>
+    <title>Flag Master Admin</title>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding: 20px; touch-action: manipulation; }
-        .container { max-width: 500px; margin: 0 auto; }
-        #instruction { font-size: 1.5rem; font-weight: bold; margin: 25px 0; min-height: 1.5em; color: #2c3e50; }
+        :root { --primary: #007bff; --bg: #f0f2f5; }
+        body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; }
+        
+        /* Header & Navigation */
+        header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        h1 { font-size: 1.2rem; margin: 0; color: #333; }
+        .admin-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 5px; }
+
+        /* Views */
+        .view { padding: 20px; display: none; }
+        .active-view { display: block; }
+
+        /* Game Elements */
+        #instruction { font-size: 1.5rem; font-weight: bold; margin: 20px 0; min-height: 1.5em; color: #2c3e50; }
         #main-flag { max-width: 90%; height: auto; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; }
         .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        .btn { background: white; border: 2px solid #007bff; border-radius: 12px; padding: 22px 10px; font-size: 1.2rem; font-weight: 600; color: #007bff; }
-        .btn:active { transform: scale(0.95); background: #e7f3ff; }
-        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .flag-btn img { width: 100%; height: auto; border-radius: 6px; }
+        .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 22px 10px; font-size: 1.1rem; font-weight: 600; color: var(--primary); }
+        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+        .flag-btn img { width: 100%; border-radius: 6px; }
+
+        /* Admin/Settings Elements */
+        .admin-list { text-align: left; background: white; border-radius: 15px; padding: 10px; max-width: 400px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .country-item { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
+        .country-item input { width: 22px; height: 22px; margin-right: 15px; }
+        .save-btn { background: var(--primary); color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.2rem; margin-top: 20px; width: 100%; max-width: 400px; }
+
+        /* Feedback Overlay */
         #feedback { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 8rem; display: none; pointer-events: none; z-index: 1000; }
     </style>
 </head>
 <body>
-    <div class="container">
+
+    <header>
+        <h1 id="view-title">Flag Fun!</h1>
+        <button class="admin-btn" onclick="toggleView()">⚙️</button>
+    </header>
+
+    <div id="game-view" class="view active-view">
         <div id="instruction">Loading...</div>
         <img id="main-flag" src="">
         <div id="options-container" class="options-grid"></div>
     </div>
+
+    <div id="admin-view" class="view">
+        <h2>Select Flags to Study</h2>
+        <div class="admin-list" id="admin-list">
+            </div>
+        <button class="save-btn" onclick="saveSettings()">Save & Play</button>
+    </div>
+
     <div id="feedback"></div>
 
     <script>
-        // Move countries from NEW_FLAGS to FLAGS as he learns them!
-        const FLAGS = {
+        const ALL_AVAILABLE = {
             "Israel": "il", "Norway": "no", "Bangladesh": "bd", "Mexico": "mx", "Germany": "de", "Canada": "ca",
             "Brazil": "br", "Austria": "at", "Georgia": "ge", "Greece": "gr", "Kenya": "ke", "Saudi Arabia": "sa",
             "Spain": "es", "Egypt": "eg", "Nepal": "np", "Japan": "jp", "China": "cn", "South Korea": "kr",
-            "UK": "gb", "Portugal": "pt", "India": "in", "Argentina": "ar", "Russia": "ru", "France": "fr"
+            "UK": "gb", "Portugal": "pt", "India": "in", "Argentina": "ar", "Russia": "ru", "France": "fr",
+            "Italy": "it", "Australia": "au", "USA": "us", "Switzerland": "ch", "Sweden": "se"
         };
-        const NEW_FLAGS = { "Italy": "it", "Australia": "au" };
-        const ALL_FLAGS = { ...FLAGS, ...NEW_FLAGS };
-        const NAMES = Object.keys(ALL_FLAGS);
-        let current = "", mode = "";
+
+        // Default list based on your prompt
+        const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
+
+        let activeNames = [];
+        let currentCountry = "", currentMode = "";
+
+        // Initialize Data
+        function init() {
+            const saved = localStorage.getItem('selectedFlags');
+            activeNames = saved ? JSON.parse(saved) : initialList;
+            renderAdminList();
+            play();
+        }
+
+        function toggleView() {
+            const gView = document.getElementById('game-view');
+            const aView = document.getElementById('admin-view');
+            const title = document.getElementById('view-title');
+            
+            if (gView.classList.contains('active-view')) {
+                gView.classList.remove('active-view');
+                aView.classList.add('active-view');
+                title.innerText = "Settings";
+            } else {
+                saveSettings();
+            }
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-list');
+            list.innerHTML = "";
+            Object.keys(ALL_AVAILABLE).sort().forEach(name => {
+                const div = document.createElement('div');
+                div.className = 'country-item';
+                const checked = activeNames.includes(name) ? 'checked' : '';
+                div.innerHTML = `<input type="checkbox" id="chk-${name}" ${checked}> <label for="chk-${name}">${name}</label>`;
+                list.appendChild(div);
+            });
+        }
+
+        function saveSettings() {
+            const selected = [];
+            Object.keys(ALL_AVAILABLE).forEach(name => {
+                if (document.getElementById(`chk-${name}`).checked) selected.push(name);
+            });
+
+            if (selected.length < 4) {
+                alert("Please select at least 4 countries!");
+                return;
+            }
+
+            activeNames = selected;
+            localStorage.setItem('selectedFlags', JSON.stringify(selected));
+            
+            document.getElementById('admin-view').classList.remove('active-view');
+            document.getElementById('game-view').classList.add('active-view');
+            document.getElementById('view-title').innerText = "Flag Fun!";
+            play();
+        }
 
         function play() {
-            mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            if (activeNames.length === 0) return;
+            
+            currentMode = Math.random() > 0.5 ? 'id' : 'fetch';
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
             grid.innerHTML = "";
             main.style.display = "none";
 
-            if (mode === 'id') {
-                current = NAMES[Math.floor(Math.random() * NAMES.length)];
+            if (currentMode === 'id') {
+                currentCountry = activeNames[Math.floor(Math.random() * activeNames.length)];
                 document.getElementById('instruction').innerText = "Which flag is this?";
-                main.src = `https://flagcdn.com/w640/${ALL_FLAGS[current]}.png`;
+                main.src = `https://flagcdn.com/w640/${ALL_AVAILABLE[currentCountry]}.png`;
                 main.style.display = "block";
-                shuffle([current, ...pickWrong(current)]).forEach(n => createBtn(n, 'text', grid));
+                shuffle([currentCountry, ...pickWrong(currentCountry)]).forEach(n => createBtn(n, 'text', grid));
             } else {
-                let choices = shuffle([...NAMES]).slice(0, 4);
-                current = choices[Math.floor(Math.random() * 4)];
-                document.getElementById('instruction').innerText = `Find: ${current}`;
+                let choices = shuffle([...activeNames]).slice(0, 4);
+                currentCountry = choices[Math.floor(Math.random() * choices.length)];
+                document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
                 choices.forEach(n => createBtn(n, 'img', grid));
             }
         }
@@ -62,10 +152,10 @@
         function createBtn(name, type, container) {
             const b = document.createElement('button');
             b.className = type === 'text' ? 'btn' : 'flag-btn';
-            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_FLAGS[name]}.png">`;
+            b.innerHTML = type === 'text' ? name : `<img src="https://flagcdn.com/w320/${ALL_AVAILABLE[name]}.png">`;
             b.onclick = () => {
                 const f = document.getElementById('feedback');
-                const win = name === current;
+                const win = name === currentCountry;
                 f.innerText = win ? "🌟" : "❌";
                 f.style.display = "block";
                 setTimeout(() => { f.style.display = "none"; if(win) play(); }, win ? 800 : 400);
@@ -73,10 +163,14 @@
             container.appendChild(b);
         }
 
-        function pickWrong(c) { return shuffle(NAMES.filter(n => n !== c)).slice(0, 3); }
+        function pickWrong(c) { 
+            const pool = activeNames.filter(n => n !== c);
+            return shuffle(pool).slice(0, 3); 
+        }
+
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
-        play();
+
+        init();
     </script>
 </body>
 </html>
-
