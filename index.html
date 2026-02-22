@@ -31,6 +31,9 @@
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); color: white; z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .play-btn { background: white; color: var(--primary); border: none; padding: 20px 50px; border-radius: 50px; font-size: 1.5rem; font-weight: bold; margin-top: 20px; cursor: pointer; }
         
+        #mode-selection { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        .mode-btn { background: white; color: var(--primary); border: none; padding: 15px 30px; border-radius: 30px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 250px; }
+        
         #instruction-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 15px 0; min-height: 50px; }
         #instruction { font-size: 1.4rem; font-weight: bold; color: #2c3e50; margin: 0; }
         .speaker-btn { font-size: 1.6rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; }
@@ -65,7 +68,11 @@
 
     <div id="start-overlay">
         <h1>Flag Master</h1>
-        <button class="play-btn" onclick="startGame()">START</button>
+        <div id="mode-selection">
+            <button class="mode-btn" onclick="startGame('fetch')">Find Mode</button>
+            <button class="mode-btn" onclick="startGame('id')">Identify Mode</button>
+            <button class="mode-btn" onclick="startGame('both')">Both Modes</button>
+        </div>
     </div>
 
     <div id="game-over">
@@ -111,9 +118,11 @@
 
         let activeNames = [], currentCountry = "", isProcessing = false, audioCtx = null, preferredVoice = null;
         let strikes = 0;
-        let history = []; 
+        let history = [];
+        let gameMode = 'both';
 
-        function startGame() {
+        function startGame(mode = 'both') {
+            gameMode = mode;
             initAudio(); populateVoiceList();
             document.getElementById('start-overlay').style.display = 'none';
             init();
@@ -147,7 +156,13 @@
                 return;
             }
             isProcessing = false;
-            const mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            
+            let mode;
+            if (gameMode === 'both') {
+                mode = Math.random() > 0.5 ? 'id' : 'fetch';
+            } else {
+                mode = gameMode;
+            }
             const grid = document.getElementById('options-container');
             const main = document.getElementById('main-flag');
             const speaker = document.getElementById('main-speaker');
