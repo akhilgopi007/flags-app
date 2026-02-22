@@ -39,12 +39,12 @@
         .speaker-btn { font-size: 1.6rem; background: #fff; border: 2px solid #ddd; border-radius: 50%; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; }
         
         #main-flag { width: auto; max-width: 90%; max-height: 35vh; border: 4px solid white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: none; margin: 0 auto; object-fit: contain; }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px; width: 100%; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; width: 100%; }
         
         .btn { background: white; border: 2px solid var(--primary); border-radius: 12px; padding: 20px 10px; font-size: 1.2rem; font-weight: 600; color: #333; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn span { color: var(--accent); font-weight: 900; font-size: 1.5rem; padding-right: 5px; margin-right: 5px; border-right: 2px solid #eee; }
         
-        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; height: 150px; cursor: pointer; display: block; overflow: hidden; }
+        .flag-btn { background: white; padding: 8px; border: 2px solid #ddd; border-radius: 12px; height: 100px; cursor: pointer; display: block; overflow: hidden; }
         .flag-btn img { width: 100%; height: 100%; object-fit: contain; border-radius: 4px; }
 
         .admin-list { text-align: left; background: white; border-radius: 15px; margin: 10px auto; overflow: hidden; }
@@ -179,6 +179,7 @@
             if (history.length > historyLimit) history.shift();
 
             if (mode === 'id') {
+                grid.style.gridTemplateColumns = '1fr 1fr';
                 document.getElementById('instruction').innerText = "Which flag is this?";
                 main.src = `https://flagcdn.com/w640/${ALL_ISO[currentCountry]}.png`;
                 main.style.display = "block";
@@ -193,9 +194,10 @@
                 }
                 shuffle(choices).forEach(n => createBtn(n, 'text', grid));
             } else {
+                grid.style.gridTemplateColumns = '1fr 1fr 1fr';
                 let choices = [currentCountry];
                 let wrongPool = activeNames.filter(n => n !== currentCountry);
-                let shuffledWrong = shuffle([...wrongPool]).slice(0, 3);
+                let shuffledWrong = shuffle([...wrongPool]).slice(0, 11);
                 choices = shuffle([...choices, ...shuffledWrong]);
                 document.getElementById('instruction').innerText = `Find: ${currentCountry}`;
                 speaker.style.display = "flex"; speakSpecific(currentCountry);
@@ -298,7 +300,7 @@
                 const chk = document.getElementById(`chk-${name}`);
                 if(chk && chk.checked) selected.push(name);
             });
-            if (selected.length < 4) { alert("Select at least 4 flags!"); return; }
+            if (selected.length < 12) { alert("Select at least 12 flags!"); return; }
             activeNames = selected;
             localStorage.setItem('selectedFlags', JSON.stringify(selected));
             toggleView(); init();
