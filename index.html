@@ -76,10 +76,6 @@
             50% { transform: scale(1.5); opacity: 0.5; }
             100% { transform: scale(1); opacity: 1; }
         }
-        .drive-config-toggle { background: none; border: none; color: #666; font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 4px 0; margin-top: 8px; }
-        .drive-config-panel { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
-        .drive-config-panel input { width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 5px 0 10px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; }
-        .drive-config-save-btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
         
         .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; cursor: pointer; }
@@ -133,14 +129,6 @@
                     </button>
                 </div>
             </div>
-            <button type="button" class="drive-config-toggle" onclick="toggleDriveConfig()">Configure Google API Credentials</button>
-            <div id="drive-config-panel" class="drive-config-panel">
-                <label style="font-size: 0.85rem; font-weight: 600;">Google OAuth Client ID:</label>
-                <input type="text" id="google-client-id-input" placeholder="e.g. 123456-abc.apps.googleusercontent.com">
-                <label style="font-size: 0.85rem; font-weight: 600;">Google API Key:</label>
-                <input type="text" id="google-api-key-input" placeholder="e.g. AIzaSy...">
-                <button type="button" class="drive-config-save-btn" onclick="saveDriveCredentials()">Save Credentials</button>
-            </div>
         </div>
         <div class="voice-section">
             <label style="font-weight: bold;">Choose Voice:</label>
@@ -170,8 +158,7 @@
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
         // Google Drive Configuration (same pattern as dittocue)
-        const DEFAULT_GOOGLE_CLIENT_ID = '';
-        const DEFAULT_GOOGLE_API_KEY = '';
+        const CLIENT_ID = '391094013851-4elhl8d069ac9l30f51jm18avlbkh8ag.apps.googleusercontent.com';
         const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
         const SCOPES = 'https://www.googleapis.com/auth/drive.file';
         const DRIVE_FILE_NAME = 'flags_app_selected_flags.json';
@@ -428,14 +415,6 @@
         }
 
         // --- GOOGLE DRIVE SYNC LOGIC (modeled after dittocue) ---
-        function getGoogleClientId() {
-            return (localStorage.getItem('googleClientId') || DEFAULT_GOOGLE_CLIENT_ID).trim();
-        }
-
-        function getGoogleApiKey() {
-            return (localStorage.getItem('googleApiKey') || DEFAULT_GOOGLE_API_KEY).trim();
-        }
-
         function updateSyncStatusUI(status) {
             syncStatus = status;
             const container = document.getElementById('drive-sync-container');
@@ -458,32 +437,6 @@
                     <span>${statusText}</span>
                 `;
             }
-        }
-
-        function toggleDriveConfig() {
-            const panel = document.getElementById('drive-config-panel');
-            if (!panel) return;
-            const isHidden = panel.style.display === 'none' || panel.style.display === '';
-            if (isHidden) {
-                document.getElementById('google-client-id-input').value = getGoogleClientId();
-                document.getElementById('google-api-key-input').value = getGoogleApiKey();
-                panel.style.display = 'block';
-            } else {
-                panel.style.display = 'none';
-            }
-        }
-
-        function saveDriveCredentials() {
-            const clientId = document.getElementById('google-client-id-input').value.trim();
-            const apiKey = document.getElementById('google-api-key-input').value.trim();
-            localStorage.setItem('googleClientId', clientId);
-            localStorage.setItem('googleApiKey', apiKey);
-            document.getElementById('drive-config-panel').style.display = 'none';
-
-            isGapiInited = false;
-            isGsiInited = false;
-            initGapi();
-            initGsi();
         }
 
         async function pullFlagsFromDrive(fileId) {
@@ -576,10 +529,9 @@
             if (!window.gapi) return;
             try {
                 await new Promise((resolve) => window.gapi.load('client', resolve));
-                const initConfig = { discoveryDocs: [DISCOVERY_DOC] };
-                const apiKey = getGoogleApiKey();
-                if (apiKey) initConfig.apiKey = apiKey;
-                await window.gapi.client.init(initConfig);
+                await window.gapi.client.init({
+                    discoveryDocs: [DISCOVERY_DOC],
+                });
                 isGapiInited = true;
             } catch (err) {
                 console.error('Error initializing GAPI:', err);
@@ -588,11 +540,9 @@
 
         function initGsi() {
             if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return;
-            const clientId = getGoogleClientId();
-            if (!clientId) return;
             try {
                 tokenClient = window.google.accounts.oauth2.initTokenClient({
-                    client_id: clientId,
+                    client_id: CLIENT_ID,
                     scope: SCOPES,
                     callback: async (resp) => {
                         if (resp.error !== undefined) {
@@ -609,13 +559,6 @@
         }
 
         function handleAuthClick() {
-            const clientId = getGoogleClientId();
-            if (!clientId) {
-                alert('Please configure your Google OAuth Client ID first.');
-                const panel = document.getElementById('drive-config-panel');
-                if (panel) panel.style.display = 'block';
-                return;
-            }
             if (!isGapiInited) initGapi();
             if (!isGsiInited || !tokenClient) initGsi();
             if (tokenClient) {
@@ -626,7 +569,7 @@
         const checkGoogleScripts = setInterval(() => {
             if (window.gapi && !isGapiInited) initGapi();
             if (window.google && !isGsiInited) initGsi();
-            if (isGapiInited && (isGsiInited || !getGoogleClientId())) clearInterval(checkGoogleScripts);
+            if (isGapiInited && isGsiInited) clearInterval(checkGoogleScripts);
         }, 100);
         function startCelebration() {
             const c = document.getElementById('celebration'); c.innerHTML = ""; c.style.display = 'block';

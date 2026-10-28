@@ -1,4 +1,4 @@
-const CACHE_NAME = 'flag-master-v1';
+const CACHE_NAME = 'flag-master-v2';
 const APP_SHELL = [
   './',
   './index.html',
