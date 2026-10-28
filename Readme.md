@@ -34,7 +34,8 @@ Designed for a child who cannot yet read full words:
 ### E. Admin Panel (Settings)
 Accessible via a ⚙️ icon:
 * **Flag Library:** A searchable list of 250+ ISO-standard countries with flag thumbnails.
-* **Persistence:** Selections and voice preferences are saved to the browser's `localStorage`.
+* **Persistence:** Selections and voice preferences are saved locally in `localStorage` and optionally synced to **Google Drive** (`flags_app_selected_flags.json`).
+* **Google Drive Cloud Sync:** Uses Google Identity Services (GIS) and Google Drive API v3 (`drive.file` scope) to pull the saved flag selection on connect and overwrite the Drive file whenever "Save & Play" is clicked.
 * **Force Voice Sync:** A utility button to refresh the browser's voice list, crucial for Safari/iPadOS background loading quirks.
 
 ## 4. Layout & UI
@@ -43,6 +44,7 @@ Accessible via a ⚙️ icon:
 * **Visual Feedback:** A CSS-based confetti celebration triggers on correct answers.
 
 ## 5. Persistence Data Structure
-The app relies on `localStorage` for two keys:
-1.  `selectedFlags`: An array of country names (strings) currently enabled for the game.
+The app relies on `localStorage` and Google Drive:
+1.  `selectedFlags`: An array of country names (strings) currently enabled for the game (synced with `flags_app_selected_flags.json` in Google Drive when connected).
 2.  `preferredVoiceName`: The name of the `SpeechSynthesisVoice` selected by the user.
+3.  `googleClientId` / `googleApiKey`: Optional local overrides for `DEFAULT_GOOGLE_CLIENT_ID` and `DEFAULT_GOOGLE_API_KEY`.

@@ -3,7 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Flag Master">
+    <meta name="theme-color" content="#007bff">
+    <link rel="manifest" href="manifest.json">
     <title>Flag Master Pro</title>
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script async defer src="https://accounts.google.com/gsi/client"></script>
     <style>
         :root { --primary: #007bff; --bg: #f0f2f5; --accent: #e67e22; --danger: #dc3545; }
         body { font-family: -apple-system, system-ui, sans-serif; text-align: center; background-color: var(--bg); margin: 0; padding: 0; touch-action: manipulation; overflow-x: hidden; }
@@ -54,6 +61,25 @@
         
         .voice-section { background: white; border-radius: 15px; padding: 15px; margin: 10px 0; border: 1px solid #ddd; }
         #voice-select { width: 100%; padding: 10px; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
+
+        .drive-section { background: white; border-radius: 15px; padding: 15px; margin: 10px 0; border: 1px solid #ddd; text-align: left; }
+        .drive-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .sync-status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #555; font-weight: 600; background-color: #f8f9fa; padding: 6px 14px; border-radius: 20px; border: 1px solid #eee; }
+        .connect-drive-btn { background: transparent; border: 1.5px solid var(--primary); color: var(--primary); padding: 6px 14px; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border-radius: 18px; cursor: pointer; }
+        .connect-drive-btn:hover { background-color: rgba(0, 123, 255, 0.08); }
+        .status-icon { width: 9px; height: 9px; border-radius: 50%; background-color: #9e9e9e; display: inline-block; }
+        .status-icon.saving, .status-icon.connecting { background-color: #ff9800; animation: pulse 1s infinite; }
+        .status-icon.synced { background-color: #4caf50; }
+        .status-icon.error { background-color: var(--danger); }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.5); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .drive-config-toggle { background: none; border: none; color: #666; font-size: 0.85rem; text-decoration: underline; cursor: pointer; padding: 4px 0; margin-top: 8px; }
+        .drive-config-panel { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; }
+        .drive-config-panel input { width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 5px 0 10px 0; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9rem; }
+        .drive-config-save-btn { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; }
         
         .save-area { position: sticky; bottom: 0; background: var(--bg); padding: 20px; border-top: 1px solid #ddd; display: flex; flex-direction: column; gap: 10px; align-items: center; }
         .save-btn { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 30px; font-size: 1.2rem; width: 100%; max-width: 400px; font-weight: bold; cursor: pointer; }
@@ -98,6 +124,24 @@
     </div>
 
     <div id="admin-view" class="view">
+        <div class="drive-section">
+            <div class="drive-header">
+                <label style="font-weight: bold;">Google Drive Sync:</label>
+                <div id="drive-sync-container" class="sync-status">
+                    <button id="connect-drive-btn" class="connect-drive-btn" onclick="handleAuthClick()">
+                        <span>📁</span> Connect Google Drive
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="drive-config-toggle" onclick="toggleDriveConfig()">Configure Google API Credentials</button>
+            <div id="drive-config-panel" class="drive-config-panel">
+                <label style="font-size: 0.85rem; font-weight: 600;">Google OAuth Client ID:</label>
+                <input type="text" id="google-client-id-input" placeholder="e.g. 123456-abc.apps.googleusercontent.com">
+                <label style="font-size: 0.85rem; font-weight: 600;">Google API Key:</label>
+                <input type="text" id="google-api-key-input" placeholder="e.g. AIzaSy...">
+                <button type="button" class="drive-config-save-btn" onclick="saveDriveCredentials()">Save Credentials</button>
+            </div>
+        </div>
         <div class="voice-section">
             <label style="font-weight: bold;">Choose Voice:</label>
             <select id="voice-select" onchange="testVoiceSelection()"></select>
@@ -125,6 +169,20 @@
         const ALL_ISO = {"Afghanistan":"af","Albania":"al","Algeria":"dz","American Samoa":"as","Andorra":"ad","Angola":"ao","Anguilla":"ai","Antarctica":"aq","Antigua and Barbuda":"ag","Argentina":"ar","Armenia":"am","Aruba":"aw","Australia":"au","Austria":"at","Azerbaijan":"az","Bahamas":"bs","Bahrain":"bh","Bangladesh":"bd","Barbados":"bb","Belarus":"by","Belgium":"be","Belize":"bz","Benin":"bj","Bermuda":"bm","Bhutan":"bt","Bolivia":"bo","Bosnia and Herzegovina":"ba","Botswana":"bw","Bouvet Island":"bv","Brazil":"br","British Indian Ocean Territory":"io","Brunei Darussalam":"bn","Bulgaria":"bg","Burkina Faso":"bf","Burundi":"bi","Cambodia":"kh","Cameroon":"cm","Canada":"ca","Cape Verde":"cv","Cayman Islands":"ky","Central African Republic":"cf","Chad":"td","Chile":"cl","China":"cn","Christmas Island":"cx","Cocos (Keeling) Islands":"cc","Colombia":"co","Comoros":"km","Congo":"cg","Cook Islands":"ck","Costa Rica":"cr","Croatia":"hr","Cuba":"cu","Cyprus":"cy","Czech Republic":"cz","Denmark":"dk","Djibouti":"dj","Dominica":"dm","Dominican Republic":"do","Ecuador":"ec","Egypt":"eg","El Salvador":"sv","Equatorial Guinea":"gq","Eritrea":"er","Estonia":"ee","Ethiopia":"et","Falkland Islands":"fk","Faroe Islands":"fo","Fiji":"fj","Finland":"fi","France":"fr","French Guiana":"gf","French Polynesia":"pf","Gabon":"ga","Gambia":"gm","Georgia":"ge","Germany":"de","Ghana":"gh","Gibraltar":"gi","Greece":"gr","Greenland":"gl","Grenada":"gd","Guadeloupe":"gp","Guam":"gu","Guatemala":"gt","Guernsey":"gg","Guinea":"gn","Guinea-Bissau":"gw","Guyana":"gy","Haiti":"ht","Heard Island and McDonald Islands":"hm","Holy See (Vatican City State)":"va","Honduras":"hn","Hong Kong":"hk","Hungary":"hu","Iceland":"is","India":"in","Indonesia":"id","Iran":"ir","Iraq":"iq","Ireland":"ie","Isle of Man":"im","Israel":"il","Italy":"it","Jamaica":"jm","Japan":"jp","Jersey":"je","Jordan":"jo","Kazakhstan":"kz","Kenya":"ke","Kiribati":"ki","North Korea":"kp","South Korea":"kr","Kuwait":"kw","Kyrgyzstan":"kg","Laos":"la","Latvia":"lv","Lebanon":"lb","Lesotho":"ls","Liberia":"lr","Libya":"ly","Liechtenstein":"li","Lithuania":"lt","Luxembourg":"lu","Macao":"mo","Macedonia":"mk","Madagascar":"mg","Malawi":"mw","Malaysia":"my","Maldives":"mv","Mali":"ml","Malta":"mt","Marshall Islands":"mh","Martinique":"mq","Mauritania":"mr","Mauritius":"mu","Mayotte":"yt","Mexico":"mx","Micronesia":"fm","Moldova":"md","Monaco":"mc","Mongolia":"mn","Montenegro":"me","Montserrat":"ms","Morocco":"ma","Mozambique":"mz","Myanmar":"mm","Namibia":"na","Nauru":"nr","Nepal":"np","Netherlands":"nl","Netherlands Antilles":"an","New Caledonia":"nc","New Zealand":"nz","Nicaragua":"ni","Niger":"ne","Nigeria":"ng","Niue":"nu","Norfolk Island":"nf","Northern Mariana Islands":"mp","Norway":"no","Oman":"om","Pakistan":"pk","Palau":"pw","Palestinian Territory":"ps","Panama":"pa","Papua New Guinea":"pg","Paraguay":"py","Peru":"pe","Philippines":"ph","Pitcairn":"pn","Poland":"pl","Portugal":"pt","Puerto Rico":"pr","Qatar":"qa","Reunion":"re","Romania":"ro","Russia":"ru","Rwanda":"rw","Saint Helena":"sh","Saint Kitts and Nevis":"kn","Saint Lucia":"lc","Saint Pierre and Miquelon":"pm","Saint Vincent and the Grenadines":"vc","Samoa":"ws","San Marino":"sm","Sao Tome and Principe":"st","Saudi Arabia":"sa","Senegal":"sn","Serbia":"rs","Seychelles":"sc","Sierra Leone":"sl","Singapore":"sg","Slovakia":"sk","Slovenia":"si","Solomon Islands":"sb","Somalia":"so","South Africa":"za","South Georgia and the South Sandwich Islands":"gs","Spain":"es","Sri Lanka":"lk","Sudan":"sd","Suriname":"sr","Svalbard and Jan Mayen":"sj","Swaziland":"sz","Sweden":"se","Switzerland":"ch","Syria":"sy","Taiwan":"tw","Tajikistan":"tj","Tanzania":"tz","Thailand":"th","Timor-Leste":"tl","Togo":"tg","Tokelau":"tk","Tonga":"to","Trinidad and Tobago":"tt","Tunisia":"tn","Turkey":"tr","Turkmenistan":"tm","Turks and Caicos Islands":"tc","Tuvalu":"tv","Uganda":"ug","Ukraine":"ua","United Arab Emirates":"ae","UK":"gb","USA":"us","Uruguay":"uy","Uzbekistan":"uz","Vanuatu":"vu","Venezuela":"ve","Vietnam":"vn","Virgin Islands, British":"vg","Virgin Islands, U.S.":"vi","Wallis and Futuna":"wf","Western Sahara":"eh","Yemen":"ye","Zambia":"zm","Zimbabwe":"zw"};
         const initialList = ["Israel", "Norway", "Bangladesh", "Mexico", "Germany", "Canada", "Brazil", "Austria", "Georgia", "Greece", "Kenya", "Saudi Arabia", "Spain", "Egypt", "Nepal", "Japan", "China", "South Korea", "UK", "Portugal", "India", "Argentina", "Russia", "France"];
 
+        // Google Drive Configuration (same pattern as dittocue)
+        const DEFAULT_GOOGLE_CLIENT_ID = '';
+        const DEFAULT_GOOGLE_API_KEY = '';
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const DRIVE_FILE_NAME = 'flags_app_selected_flags.json';
+
+        let isGapiInited = false;
+        let isGsiInited = false;
+        let tokenClient = null;
+        let isAuthenticated = false;
+        let driveFileId = null;
+        let syncStatus = 'idle'; // 'idle' | 'saving' | 'synced' | 'error' | 'connecting'
+
         let activeNames = [], currentCountry = "", isProcessing = false, audioCtx = null, preferredVoice = null;
         let strikes = 0;
         let history = [];
@@ -142,6 +200,7 @@
         function init() {
             const saved = localStorage.getItem('selectedFlags');
             activeNames = saved ? JSON.parse(saved) : initialList;
+            precacheActiveFlags();
 
             const soundSetting = localStorage.getItem('playSoundOnWrongAnswer');
             playSoundOnWrongAnswer = soundSetting === null ? true : JSON.parse(soundSetting);
@@ -361,8 +420,214 @@
             playSoundOnWrongAnswer = document.getElementById('wrong-answer-sound-chk').checked;
             localStorage.setItem('playSoundOnWrongAnswer', JSON.stringify(playSoundOnWrongAnswer));
 
+            if (isAuthenticated) {
+                saveFlagsToDrive(selected);
+            }
+
             toggleView(); init();
         }
+
+        // --- GOOGLE DRIVE SYNC LOGIC (modeled after dittocue) ---
+        function getGoogleClientId() {
+            return (localStorage.getItem('googleClientId') || DEFAULT_GOOGLE_CLIENT_ID).trim();
+        }
+
+        function getGoogleApiKey() {
+            return (localStorage.getItem('googleApiKey') || DEFAULT_GOOGLE_API_KEY).trim();
+        }
+
+        function updateSyncStatusUI(status) {
+            syncStatus = status;
+            const container = document.getElementById('drive-sync-container');
+            if (!container) return;
+
+            if (!isAuthenticated) {
+                container.innerHTML = `
+                    <button id="connect-drive-btn" class="connect-drive-btn" onclick="handleAuthClick()">
+                        <span>📁</span> Connect Google Drive
+                    </button>
+                `;
+            } else {
+                const statusText =
+                    syncStatus === 'saving' ? 'Syncing to Drive...' :
+                    syncStatus === 'synced' ? 'Cloud Synced' :
+                    syncStatus === 'connecting' ? 'Connecting...' :
+                    syncStatus === 'error' ? 'Sync Error' : 'Connected';
+                container.innerHTML = `
+                    <span class="status-icon ${syncStatus}"></span>
+                    <span>${statusText}</span>
+                `;
+            }
+        }
+
+        function toggleDriveConfig() {
+            const panel = document.getElementById('drive-config-panel');
+            if (!panel) return;
+            const isHidden = panel.style.display === 'none' || panel.style.display === '';
+            if (isHidden) {
+                document.getElementById('google-client-id-input').value = getGoogleClientId();
+                document.getElementById('google-api-key-input').value = getGoogleApiKey();
+                panel.style.display = 'block';
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        function saveDriveCredentials() {
+            const clientId = document.getElementById('google-client-id-input').value.trim();
+            const apiKey = document.getElementById('google-api-key-input').value.trim();
+            localStorage.setItem('googleClientId', clientId);
+            localStorage.setItem('googleApiKey', apiKey);
+            document.getElementById('drive-config-panel').style.display = 'none';
+
+            isGapiInited = false;
+            isGsiInited = false;
+            initGapi();
+            initGsi();
+        }
+
+        async function pullFlagsFromDrive(fileId) {
+            try {
+                const response = await window.gapi.client.drive.files.get({
+                    fileId: fileId,
+                    alt: 'media',
+                });
+                let driveFlags = response.result;
+                if (typeof driveFlags === 'string') {
+                    driveFlags = JSON.parse(driveFlags);
+                }
+                if (driveFlags && !Array.isArray(driveFlags) && Array.isArray(driveFlags.selectedFlags)) {
+                    driveFlags = driveFlags.selectedFlags;
+                }
+                if (Array.isArray(driveFlags) && driveFlags.length > 0) {
+                    const validFlags = driveFlags.filter(name => ALL_ISO[name]);
+                    if (validFlags.length >= 12) {
+                        activeNames = validFlags;
+                        localStorage.setItem('selectedFlags', JSON.stringify(activeNames));
+                        precacheActiveFlags();
+                        renderAdminList();
+                        if (document.getElementById('start-overlay').style.display === 'none') {
+                            history = [];
+                            play();
+                        }
+                    }
+                }
+                updateSyncStatusUI('synced');
+            } catch (err) {
+                console.error('Error pulling from drive:', err);
+                updateSyncStatusUI('error');
+            }
+        }
+
+        async function saveFlagsToDrive(flagsToSave, overrideFileId) {
+            const fileId = overrideFileId || driveFileId;
+            if (!fileId) return;
+
+            updateSyncStatusUI('saving');
+            try {
+                await window.gapi.client.request({
+                    path: `/upload/drive/v3/files/${fileId}`,
+                    method: 'PATCH',
+                    params: { uploadType: 'media' },
+                    body: JSON.stringify(flagsToSave),
+                });
+                updateSyncStatusUI('synced');
+            } catch (err) {
+                console.error('Error saving to drive:', err);
+                updateSyncStatusUI('error');
+            }
+        }
+
+        async function findOrCreateDriveFile() {
+            updateSyncStatusUI('connecting');
+            try {
+                const response = await window.gapi.client.drive.files.list({
+                    q: `name = '${DRIVE_FILE_NAME}' and trashed = false`,
+                    fields: 'files(id, name)',
+                });
+
+                const files = response.result.files;
+                if (files && files.length > 0) {
+                    const fileId = files[0].id;
+                    driveFileId = fileId;
+                    await pullFlagsFromDrive(fileId);
+                } else {
+                    const createResponse = await window.gapi.client.drive.files.create({
+                        resource: {
+                            name: DRIVE_FILE_NAME,
+                            mimeType: 'application/json',
+                        },
+                        fields: 'id',
+                    });
+                    driveFileId = createResponse.result.id;
+                    const currentSaved = localStorage.getItem('selectedFlags');
+                    const flagsToSave = activeNames.length > 0
+                        ? activeNames
+                        : (currentSaved ? JSON.parse(currentSaved) : initialList);
+                    await saveFlagsToDrive(flagsToSave, driveFileId);
+                }
+            } catch (err) {
+                console.error('Error finding/creating drive file:', err);
+                updateSyncStatusUI('error');
+            }
+        }
+
+        async function initGapi() {
+            if (!window.gapi) return;
+            try {
+                await new Promise((resolve) => window.gapi.load('client', resolve));
+                const initConfig = { discoveryDocs: [DISCOVERY_DOC] };
+                const apiKey = getGoogleApiKey();
+                if (apiKey) initConfig.apiKey = apiKey;
+                await window.gapi.client.init(initConfig);
+                isGapiInited = true;
+            } catch (err) {
+                console.error('Error initializing GAPI:', err);
+            }
+        }
+
+        function initGsi() {
+            if (!window.google || !window.google.accounts || !window.google.accounts.oauth2) return;
+            const clientId = getGoogleClientId();
+            if (!clientId) return;
+            try {
+                tokenClient = window.google.accounts.oauth2.initTokenClient({
+                    client_id: clientId,
+                    scope: SCOPES,
+                    callback: async (resp) => {
+                        if (resp.error !== undefined) {
+                            throw resp;
+                        }
+                        isAuthenticated = true;
+                        await findOrCreateDriveFile();
+                    },
+                });
+                isGsiInited = true;
+            } catch (err) {
+                console.error('Error initializing GSI:', err);
+            }
+        }
+
+        function handleAuthClick() {
+            const clientId = getGoogleClientId();
+            if (!clientId) {
+                alert('Please configure your Google OAuth Client ID first.');
+                const panel = document.getElementById('drive-config-panel');
+                if (panel) panel.style.display = 'block';
+                return;
+            }
+            if (!isGapiInited) initGapi();
+            if (!isGsiInited || !tokenClient) initGsi();
+            if (tokenClient) {
+                tokenClient.requestAccessToken({ prompt: 'consent' });
+            }
+        }
+
+        const checkGoogleScripts = setInterval(() => {
+            if (window.gapi && !isGapiInited) initGapi();
+            if (window.google && !isGsiInited) initGsi();
+            if (isGapiInited && (isGsiInited || !getGoogleClientId())) clearInterval(checkGoogleScripts);
+        }, 100);
         function startCelebration() {
             const c = document.getElementById('celebration'); c.innerHTML = ""; c.style.display = 'block';
             for (let i = 0; i < 40; i++) {
@@ -376,6 +641,28 @@
         }
         function stopCelebration() { document.getElementById('celebration').style.display = 'none'; }
         function shuffle(a) { return a.sort(() => Math.random() - 0.5); }
+
+        function precacheActiveFlags() {
+            if (!navigator.onLine) return;
+            const saved = localStorage.getItem('selectedFlags');
+            const names = activeNames.length > 0 ? activeNames : (saved ? JSON.parse(saved) : initialList);
+            names.forEach(name => {
+                const iso = ALL_ISO[name];
+                if (!iso) return;
+                ['w640', 'w320', 'w80'].forEach(size => {
+                    const img = new Image();
+                    img.src = `https://flagcdn.com/${size}/${iso}.png`;
+                });
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(() => {
+                    precacheActiveFlags();
+                }).catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
 
     </script>
 </body>
